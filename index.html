@@ -1,0 +1,523 @@
+
+<h2 class="sr-only">DIGILOG complete database schema — entity relationship diagram across 6 domains</h2>
+<style>
+.domain-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+.dtab { padding:6px 14px; border-radius:20px; font-size:13px; cursor:pointer; border:1px solid var(--color-border-primary); color:var(--color-text-secondary); background:var(--color-background-secondary); transition:all .15s; }
+.dtab.active { color:#534AB7; border-color:#534AB7; background:#EEEDFE; font-weight:500; }
+.domain-label { font-size:11px; font-weight:500; letter-spacing:.04em; text-transform:uppercase; color:var(--color-text-tertiary); margin:0 0 6px; }
+#erd-container { min-height:420px; }
+#erd-container svg { max-width:100%; height:auto; }
+</style>
+
+<div class="domain-tabs">
+  <button class="dtab active" onclick="showDomain('all')">All tables</button>
+  <button class="dtab" onclick="showDomain('auth')">Auth & tenants</button>
+  <button class="dtab" onclick="showDomain('master')">Master config</button>
+  <button class="dtab" onclick="showDomain('users')">Users & employees</button>
+  <button class="dtab" onclick="showDomain('sop')">SOPs & forms</button>
+  <button class="dtab" onclick="showDomain('equipment')">Equipment</button>
+  <button class="dtab" onclick="showDomain('batch')">Batch & logs</button>
+</div>
+<div id="erd-container"></div>
+
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '13px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+    primaryColor: dark ? '#3C3489' : '#EEEDFE',
+    primaryTextColor: dark ? '#CECBF6' : '#26215C',
+    primaryBorderColor: dark ? '#534AB7' : '#7F77DD',
+    secondaryColor: dark ? '#085041' : '#E1F5EE',
+    secondaryTextColor: dark ? '#9FE1CB' : '#04342C',
+    tertiaryColor: dark ? '#444441' : '#F1EFE8',
+    tertiaryTextColor: dark ? '#D3D1C7' : '#2C2C2A',
+  },
+  er: { diagramPadding: 20, layoutDirection: 'TB', minEntityWidth: 100, minEntityHeight: 75, entityPadding: 15 }
+});
+
+const diagrams = {
+auth: `erDiagram
+  companies {
+    uuid id PK
+    string company_code UK
+    string company_name
+    string db_schema_name UK
+    string contact_email
+    boolean is_active
+    string subscription_plan
+    timestamp created_at
+  }
+  central_users {
+    uuid id PK
+    uuid company_id FK
+    string username
+    string email
+    string password_hash
+    boolean is_super_admin
+    boolean is_active
+    boolean must_change_pwd
+    timestamp last_login_at
+  }
+  refresh_tokens {
+    uuid id PK
+    uuid user_id FK
+    string token_hash UK
+    timestamp expires_at
+    boolean revoked
+    timestamp created_at
+  }
+  login_audit {
+    bigint id PK
+    uuid company_id FK
+    uuid user_id FK
+    string username_attempted
+    string event_type
+    inet ip_address
+    text user_agent
+    timestamp created_at
+  }
+  login_attempts {
+    bigint id PK
+    string identifier
+    uuid company_id FK
+    int attempt_count
+    timestamp locked_until
+    timestamp last_attempt
+  }
+  companies ||--o{ central_users : "has users"
+  companies ||--o{ login_audit : "tracks"
+  companies ||--o{ login_attempts : "rate limits"
+  central_users ||--o{ refresh_tokens : "issues"
+  central_users ||--o{ login_audit : "logged in"`,
+
+master: `erDiagram
+  room_types {
+    uuid id PK
+    string room_type_id UK
+    string room_type_name
+    text room_details
+    boolean is_active
+  }
+  rooms {
+    uuid id PK
+    uuid room_type_id FK
+    string room_id UK
+    string room_name
+    string floor
+    numeric area_sqft
+    boolean is_active
+  }
+  process_types {
+    uuid id PK
+    string process_id UK
+    string process_type
+    text process_details
+    boolean is_active
+  }
+  packaging_types {
+    uuid id PK
+    string packaging_type_id UK
+    string packaging_type_name
+    text packaging_details
+    boolean is_active
+  }
+  function_types {
+    uuid id PK
+    string function_type_id UK
+    string function_type_name
+    text function_details
+    boolean is_active
+  }
+  roles {
+    uuid id PK
+    string role_id UK
+    string role_type
+    text role_details
+    jsonb permissions
+    boolean is_active
+  }
+  standard_weights {
+    uuid id PK
+    string weight_serial_no UK
+    string standard_weight
+    date last_calibrated_on
+    date next_calibration_due
+    string tolerance_limit
+    string certificate_url
+  }
+  room_types ||--o{ rooms : "classifies"`,
+
+users: `erDiagram
+  central_users {
+    uuid id PK
+    string username
+    string email
+    string password_hash
+  }
+  roles {
+    uuid id PK
+    string role_id UK
+    string role_type
+    jsonb permissions
+  }
+  employees {
+    uuid id PK
+    uuid central_user_id FK
+    string employee_code UK
+    string username
+    string first_name
+    string last_name
+    string email
+    string phone
+    date date_of_joining
+    uuid role_id FK
+    string profile_pic_url
+    boolean is_active
+  }
+  user_assignments {
+    uuid id PK
+    uuid employee_id FK
+    uuid room_id FK
+    uuid equipment_id FK
+    uuid functioning_type_id FK
+    string user_status
+    uuid available_in_room FK
+    date effective_from
+    date effective_to
+  }
+  function_types {
+    uuid id PK
+    string function_type_name
+  }
+  rooms {
+    uuid id PK
+    string room_id UK
+    string room_name
+  }
+  central_users ||--|| employees : "has profile"
+  roles ||--o{ employees : "assigned to"
+  employees ||--o{ user_assignments : "has assignment"
+  rooms ||--o{ user_assignments : "assigned room"
+  function_types ||--o{ user_assignments : "functioning type"`,
+
+sop: `erDiagram
+  sop_files {
+    uuid id PK
+    string sop_id UK
+    string description
+    string file_url
+    string file_type
+    string revision_number
+    date revision_date
+    string status
+  }
+  forms {
+    uuid id PK
+    string form_id UK
+    string cleaning_type
+    string description
+    uuid sop_file_id FK
+    string status
+    string version
+    string tools
+  }
+  room_cleaning_sop {
+    uuid id PK
+    string cleaning_type
+    int step_number
+    interval time_allotted
+    string method
+    text procedure_text
+    string chemical_used
+    text equipment_used
+    string view_link_url
+    uuid sop_file_id FK
+  }
+  room_inspection_sop {
+    uuid id PK
+    string cleaning_type
+    int step_number
+    text procedure_text
+    string picture_url
+    uuid sop_file_id FK
+  }
+  room_qac_sop {
+    uuid id PK
+    string cleaning_type
+    int step_number
+    text procedure_text
+    string picture_url
+  }
+  equipment_cleaning_sop {
+    uuid id PK
+    string cleaning_type
+    int step_number
+    interval time_allotted
+    string method
+    text procedure_text
+    string chemical_used
+    text equipment_used
+    uuid sop_file_id FK
+  }
+  equipment_inspection_sop {
+    uuid id PK
+    uuid equipment_id FK
+    string cleaning_type
+    int step_number
+    text procedure_text
+    string picture_url
+  }
+  equipment_qac_sop {
+    uuid id PK
+    uuid equipment_id FK
+    string cleaning_type
+    int step_number
+    text procedure_text
+    string picture_url
+  }
+  sop_files ||--o{ forms : "referenced by"
+  sop_files ||--o{ room_cleaning_sop : "governs"
+  sop_files ||--o{ room_inspection_sop : "governs"
+  sop_files ||--o{ equipment_cleaning_sop : "governs"`,
+
+equipment: `erDiagram
+  rooms {
+    uuid id PK
+    string room_id UK
+    string room_name
+  }
+  equipment {
+    uuid id PK
+    string equipment_id UK
+    string equipment_name
+    string serial_number UK
+    string equipment_type
+    string manufacturer
+    string model_number
+    date purchase_date
+    date commission_date
+    date decommission_date
+    uuid room_id FK
+    text[] supported_processes
+    boolean is_active
+  }
+  scales {
+    uuid id PK
+    string scale_id UK
+    string scale_number UK
+    string min_range
+    string max_range
+    string capacity
+    string least_count
+    date verified_on
+    date calibrated_due
+    string form_verification_no
+    string form_calibration_no
+    uuid room_id FK
+    boolean is_active
+  }
+  equipment_calibration_logs {
+    uuid id PK
+    uuid equipment_id FK
+    date calibration_date
+    uuid calibrated_by FK
+    uuid verified_by FK
+    date next_due_date
+    string certificate_url
+    string result
+  }
+  equipment_maintenance_logs {
+    uuid id PK
+    uuid equipment_id FK
+    string maintenance_type
+    date maintenance_date
+    uuid performed_by FK
+    date next_maintenance_due
+    string status
+  }
+  scale_verification_logs {
+    uuid id PK
+    uuid scale_id FK
+    string log_type
+    date log_date
+    uuid performed_by FK
+    uuid standard_weight_id FK
+    numeric reading_obtained
+    numeric deviation
+    string result
+  }
+  standard_weights {
+    uuid id PK
+    string weight_serial_no UK
+    string standard_weight
+    date last_calibrated_on
+    date next_calibration_due
+    string tolerance_limit
+  }
+  rooms ||--o{ equipment : "houses"
+  rooms ||--o{ scales : "houses"
+  equipment ||--o{ equipment_calibration_logs : "tracks calibration"
+  equipment ||--o{ equipment_maintenance_logs : "tracks maintenance"
+  scales ||--o{ scale_verification_logs : "verified via"
+  standard_weights ||--o{ scale_verification_logs : "used in"`,
+
+batch: `erDiagram
+  batches {
+    uuid id PK
+    string batch_id UK
+    string product_name
+    string product_code
+    string batch_number
+    numeric batch_size
+    uuid packaging_type_id FK
+    string status
+    date receipt_date
+    numeric expected_yield
+    numeric actual_yield
+    date release_date
+    uuid released_by FK
+    uuid created_by FK
+  }
+  batch_process_steps {
+    uuid id PK
+    uuid batch_id FK
+    uuid process_type_id FK
+    int step_number
+    uuid room_id FK
+    uuid equipment_id FK
+    string status
+    timestamp started_at
+    timestamp completed_at
+    uuid operator_id FK
+    uuid inspector1_id FK
+    uuid inspector2_id FK
+    uuid qa_id FK
+  }
+  batch_packing {
+    uuid id PK
+    uuid batch_id FK
+    uuid packaging_type_id FK
+    uuid room_id FK
+    numeric quantity_packed
+    date packing_date
+    uuid packed_by FK
+    uuid verified_by FK
+  }
+  room_cleaning_logs {
+    uuid id PK
+    uuid room_id FK
+    string cleaning_type
+    date cleaning_date
+    uuid cleaned_by FK
+    uuid inspector1_id FK
+    uuid qac_id FK
+    string status
+    uuid batch_id FK
+  }
+  equipment_cleaning_logs {
+    uuid id PK
+    uuid equipment_id FK
+    string cleaning_type
+    date cleaning_date
+    uuid cleaned_by FK
+    uuid inspector1_id FK
+    uuid qac_id FK
+    string status
+    uuid batch_id FK
+  }
+  audit_log {
+    bigint id PK
+    string table_name
+    uuid record_id
+    string action
+    jsonb old_values
+    jsonb new_values
+    uuid performed_by FK
+    inet ip_address
+    timestamp created_at
+  }
+  notifications {
+    uuid id PK
+    uuid recipient_id FK
+    string title
+    text body
+    string type
+    string reference_table
+    uuid reference_id
+    boolean is_read
+    timestamp created_at
+  }
+  batches ||--o{ batch_process_steps : "has steps"
+  batches ||--o{ batch_packing : "packed as"
+  batches ||--o{ room_cleaning_logs : "triggers cleaning"
+  batches ||--o{ equipment_cleaning_logs : "triggers cleaning"`,
+
+all: `erDiagram
+  companies ||--o{ central_users : "has"
+  central_users ||--|| employees : "profile"
+  central_users ||--o{ refresh_tokens : "issues"
+  roles ||--o{ employees : "assigned"
+  employees ||--o{ user_assignments : "assigned"
+  room_types ||--o{ rooms : "classifies"
+  rooms ||--o{ equipment : "houses"
+  rooms ||--o{ scales : "houses"
+  rooms ||--o{ user_assignments : "allocated"
+  rooms ||--o{ room_cleaning_logs : "cleaned"
+  rooms ||--o{ batch_process_steps : "used in"
+  equipment ||--o{ user_assignments : "allocated"
+  equipment ||--o{ batch_process_steps : "used in"
+  equipment ||--o{ equipment_cleaning_logs : "cleaned"
+  equipment ||--o{ equipment_calibration_logs : "calibrated"
+  equipment ||--o{ equipment_inspection_sop : "has SOP"
+  equipment ||--o{ equipment_qac_sop : "has QAC"
+  sop_files ||--o{ forms : "ref"
+  sop_files ||--o{ room_cleaning_sop : "governs"
+  sop_files ||--o{ equipment_cleaning_sop : "governs"
+  batches ||--o{ batch_process_steps : "steps"
+  batches ||--o{ batch_packing : "packed"
+  batches ||--o{ room_cleaning_logs : "triggers"
+  batches ||--o{ equipment_cleaning_logs : "triggers"
+  scales ||--o{ scale_verification_logs : "verified"
+  standard_weights ||--o{ scale_verification_logs : "used in"
+  packaging_types ||--o{ batches : "used in"
+  process_types ||--o{ batch_process_steps : "process"
+  employees ||--o{ audit_log : "performed"
+  employees ||--o{ notifications : "receives"
+  function_types ||--o{ user_assignments : "function"
+`
+};
+
+async function render(key) {
+  const container = document.getElementById('erd-container');
+  container.innerHTML = '<p style="color:var(--color-text-tertiary);font-size:13px;padding:20px 0">Rendering…</p>';
+  try {
+    const id = 'erd-' + Date.now();
+    const { svg } = await mermaid.render(id, diagrams[key]);
+    container.innerHTML = svg;
+    container.querySelectorAll('svg').forEach(s => {
+      s.style.maxWidth = '100%';
+      s.style.height = 'auto';
+    });
+  } catch(e) {
+    container.innerHTML = '<p style="color:var(--color-text-danger);font-size:13px;padding:20px 0">Render error: ' + e.message + '</p>';
+  }
+}
+
+window.showDomain = function(key) {
+  document.querySelectorAll('.dtab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  render(key);
+};
+
+render('all');
+</script>
