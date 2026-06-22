@@ -1,0 +1,310 @@
+
+<h2 class="sr-only">DIGILOG login module — interactive entity relationship diagram with crow's foot notation showing 6 tables: companies, roles, users, login_attempts, login_audit, and refresh_tokens</h2>
+
+<style>
+.tab-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding-top:4px}
+.etab{padding:5px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:0.5px solid var(--color-border-primary);color:var(--color-text-secondary);background:var(--color-background-secondary);transition:all .15s;font-weight:400}
+.etab.on{color:#534AB7;border-color:#534AB7;background:#EEEDFE;font-weight:500}
+.info-bar{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:var(--color-text-secondary);line-height:1.6}
+.info-bar strong{color:var(--color-text-primary);font-weight:500}
+#erd-wrap svg{max-width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:11px;color:var(--color-text-secondary)}
+.leg-item{display:flex;align-items:center;gap:5px}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+</style>
+
+<div class="tab-bar">
+  <button class="etab on"  onclick="show('all',this)">All tables</button>
+  <button class="etab" onclick="show('auth',this)">Auth flow</button>
+  <button class="etab" onclick="show('tenant',this)">Tenant tables</button>
+  <button class="etab" onclick="show('audit',this)">Audit &amp; security</button>
+</div>
+
+<div class="info-bar" id="info-bar">
+  <strong>Full schema</strong> — 6 tables, 2 schemas. <code>companies</code> lives in the central <code>public</code> schema. All other tables live inside the tenant schema (e.g. <code>tenant_pharmacore</code>), completely isolated per company. Crow's foot notation: <code>||</code> = exactly one &nbsp;·&nbsp; <code>o{</code> = zero or many &nbsp;·&nbsp; <code>||--||</code> = one-to-one.
+</div>
+
+<div id="erd-wrap"></div>
+
+<div class="legend">
+  <div class="leg-item"><div class="leg-dot" style="background:#EEEDFE;border:1px solid #534AB7"></div>Central schema (public)</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#E1F5EE;border:1px solid #0F6E56"></div>Tenant schema</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#FFF0C2;border:1px solid #BA7517"></div>Audit / security</div>
+</div>
+
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '13px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+    primaryColor: dark ? '#3C3489' : '#EEEDFE',
+    primaryTextColor: dark ? '#CECBF6' : '#26215C',
+    primaryBorderColor: dark ? '#534AB7' : '#7F77DD',
+    secondaryColor: dark ? '#085041' : '#E1F5EE',
+    secondaryTextColor: dark ? '#9FE1CB' : '#04342C',
+    secondaryBorderColor: dark ? '#0F6E56' : '#1D9E75',
+    tertiaryColor: dark ? '#4a3d00' : '#FFF8E6',
+    tertiaryTextColor: dark ? '#FAC775' : '#633806',
+    tertiaryBorderColor: dark ? '#854F0B' : '#BA7517',
+    nodeBorder: dark ? '#534AB7' : '#7F77DD',
+    clusterBkg: dark ? '#1a1a2e' : '#f8f8ff',
+    titleColor: dark ? '#CECBF6' : '#26215C',
+    edgeLabelBackground: dark ? '#2a2a3e' : '#f0efff',
+    attributeBackgroundColorEven: dark ? '#1e2d1e' : '#f0faf5',
+    attributeBackgroundColorOdd: dark ? '#161616' : '#ffffff',
+  },
+  er: {
+    diagramPadding: 24,
+    layoutDirection: 'TB',
+    minEntityWidth: 120,
+    minEntityHeight: 80,
+    entityPadding: 16,
+    useMaxWidth: true,
+  }
+});
+
+const diagrams = {
+
+all: `erDiagram
+  companies {
+    uuid id PK
+    string company_code UK
+    string company_name
+    string schema_name UK
+    string logo_url
+    string contact_email
+    boolean is_active
+    timestamptz created_at
+  }
+
+  roles {
+    uuid id PK
+    string role_name UK
+    string role_group
+    jsonb permissions
+    boolean is_system_role
+    boolean is_active
+    uuid created_by FK
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+  users {
+    uuid id PK
+    uuid company_id FK
+    uuid role_id FK
+    string username UK
+    string email UK
+    string password_hash
+    string first_name
+    string last_name
+    string employee_code UK
+    string profile_pic_url
+    date date_of_joining
+    boolean is_active
+    boolean must_change_password
+    timestamptz last_login_at
+    uuid created_by FK
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+  login_attempts {
+    bigint id PK
+    string identifier
+    string identifier_type
+    int attempt_count
+    timestamptz locked_until
+    timestamptz last_attempt_at
+  }
+
+  login_audit {
+    bigint id PK
+    uuid user_id FK
+    string username_attempted
+    string event_type
+    inet ip_address
+    text user_agent
+    timestamptz created_at
+  }
+
+  refresh_tokens {
+    uuid id PK
+    uuid user_id FK
+    string token_hash UK
+    timestamptz expires_at
+    boolean is_revoked
+    string device_info
+    timestamptz created_at
+  }
+
+  companies ||--o{ users : "has users"
+  roles ||--o{ users : "assigned to"
+  users ||--o{ login_audit : "generates"
+  users ||--o{ refresh_tokens : "issues"
+  users }o--|| roles : "created by"
+`,
+
+auth: `erDiagram
+  companies {
+    uuid id PK
+    string company_code UK
+    string company_name
+    string schema_name UK
+    boolean is_active
+  }
+
+  users {
+    uuid id PK
+    uuid company_id FK
+    uuid role_id FK
+    string username UK
+    string email UK
+    string password_hash
+    string first_name
+    string last_name
+    boolean is_active
+    boolean must_change_password
+    timestamptz last_login_at
+  }
+
+  roles {
+    uuid id PK
+    string role_name UK
+    string role_group
+    jsonb permissions
+    boolean is_active
+  }
+
+  refresh_tokens {
+    uuid id PK
+    uuid user_id FK
+    string token_hash UK
+    timestamptz expires_at
+    boolean is_revoked
+    string device_info
+  }
+
+  companies ||--o{ users : "owns"
+  roles ||--o{ users : "assigned to"
+  users ||--o{ refresh_tokens : "has sessions"
+`,
+
+tenant: `erDiagram
+  roles {
+    uuid id PK
+    string role_name UK
+    string role_group
+    jsonb permissions
+    boolean is_system_role
+    boolean is_active
+    uuid created_by FK
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+  users {
+    uuid id PK
+    uuid company_id FK
+    uuid role_id FK
+    string username UK
+    string email UK
+    string password_hash
+    string first_name
+    string last_name
+    string employee_code UK
+    date date_of_joining
+    boolean is_active
+    boolean must_change_password
+    timestamptz last_login_at
+    uuid created_by FK
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+  roles ||--o{ users : "assigned to"
+  users }o--|| roles : "admin created role"
+`,
+
+audit: `erDiagram
+  users {
+    uuid id PK
+    string username UK
+    string first_name
+    string last_name
+    boolean is_active
+  }
+
+  login_attempts {
+    bigint id PK
+    string identifier
+    string identifier_type
+    int attempt_count
+    timestamptz locked_until
+    timestamptz last_attempt_at
+  }
+
+  login_audit {
+    bigint id PK
+    uuid user_id FK
+    string username_attempted
+    string event_type
+    inet ip_address
+    text user_agent
+    timestamptz created_at
+  }
+
+  refresh_tokens {
+    uuid id PK
+    uuid user_id FK
+    string token_hash UK
+    timestamptz expires_at
+    boolean is_revoked
+    string device_info
+    timestamptz created_at
+  }
+
+  users ||--o{ login_audit : "logged in audit"
+  users ||--o{ refresh_tokens : "active sessions"
+`
+};
+
+const infos = {
+  all: '<strong>Full schema</strong> — 6 tables, 2 schemas. <code>companies</code> lives in the central <code>public</code> schema. All other tables live inside the tenant schema (e.g. <code>tenant_pharmacore</code>), completely isolated per company. Crow\'s foot: <code>||</code> = exactly one &nbsp;·&nbsp; <code>o{</code> = zero or many.',
+  auth: '<strong>Auth flow</strong> — The login sequence: browser sends <code>company_code</code> → look up <code>companies</code> → route to tenant schema → look up <code>users</code> by username → verify bcrypt hash → check <code>roles.permissions</code> → issue JWT + store <code>refresh_tokens</code> row.',
+  tenant: '<strong>Tenant tables</strong> — Everything inside one company\'s isolated schema. <code>roles</code> stores all 21 configurable roles with a JSONB permissions map. <code>users</code> holds both login credentials and employee profile in one table. The self-referencing <code>created_by</code> FK tracks which admin created each user/role.',
+  audit: '<strong>Audit &amp; security</strong> — GMP compliance layer. <code>login_audit</code> is append-only (no UPDATE/DELETE ever). <code>login_attempts</code> tracks both username and IP separately to block brute force. <code>refresh_tokens</code> stores one row per active browser session — revoking all rows force-logs out the user everywhere instantly.'
+};
+
+async function render(key) {
+  const wrap = document.getElementById('erd-wrap');
+  wrap.innerHTML = '<p style="font-size:12px;color:var(--color-text-tertiary);padding:16px 0">Rendering diagram…</p>';
+  document.getElementById('info-bar').innerHTML = infos[key];
+  try {
+    const uid = 'erd' + Date.now();
+    const { svg } = await mermaid.render(uid, diagrams[key]);
+    wrap.innerHTML = svg;
+    const s = wrap.querySelector('svg');
+    if (s) { s.style.maxWidth = '100%'; s.style.height = 'auto'; }
+  } catch(e) {
+    wrap.innerHTML = '<p style="font-size:12px;color:var(--color-text-danger);padding:16px 0">Render error — ' + e.message + '</p>';
+  }
+}
+
+window.show = function(key, btn) {
+  document.querySelectorAll('.etab').forEach(t => t.classList.remove('on'));
+  btn.classList.add('on');
+  render(key);
+};
+
+render('all');
+</script>
