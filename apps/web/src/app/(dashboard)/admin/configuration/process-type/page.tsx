@@ -1,0 +1,499 @@
+"use client"
+
+import { useEffect, useState, useCallback, useRef } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth/useAuth"
+import {
+  apiListProcessTypes,
+  apiListProcessGroups,
+  apiDeleteProcessType,
+  apiExportProcessTypes,
+  apiImportProcessTypes,
+  type ProcessTypeItem,
+  type ProcessTypeImportRow,
+  type ImportResult,
+  ApiError,
+} from "@/lib/auth/api"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { AddProcessTypeDialog } from "./AddProcessTypeDialog"
+import { EditProcessTypeDialog } from "./EditProcessTypeDialog"
+import {
+  GitBranch,
+  ChevronLeft,
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  ShieldCheck,
+  Clock,
+  Download,
+  Upload,
+  X,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+
+// ── CSV template ───────────────────────────────────────────────────────────────
+
+const CSV_TEMPLATE = [
+  "process_type,process_details,process_group,typical_duration_min,requires_clean_room,display_order",
+  "Grinding,Particle size reduction by abrasive contact,Primary Manufacturing,60,true,1",
+  "Packaging,Packing finished products into containers,Packaging,150,false,9",
+].join("\n")
+
+function downloadTemplate() {
+  const blob = new Blob([CSV_TEMPLATE], { type: "text/csv" })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement("a")
+  a.href = url; a.download = "process_types_template.csv"; a.click()
+  URL.revokeObjectURL(url)
+}
+
+function parseCsv(text: string): ProcessTypeImportRow[] {
+  const lines  = text.trim().split(/\r?\n/)
+  const header = lines[0].split(",").map((h) => h.trim().toLowerCase())
+  return lines.slice(1).map((line) => {
+    const cols: Record<string, string> = {}
+    line.split(",").forEach((v, i) => { cols[header[i] ?? `col${i}`] = v.trim().replace(/^"|"$/g, "") })
+    const row: ProcessTypeImportRow = { processType: cols["process_type"] ?? "" }
+    if (cols["process_details"])      row.processDetails     = cols["process_details"]
+    if (cols["process_group"])        row.processGroup       = cols["process_group"]
+    if (cols["typical_duration_min"]) row.typicalDurationMin = Number(cols["typical_duration_min"]) || null
+    if (cols["requires_clean_room"])  row.requiresCleanRoom  = cols["requires_clean_room"]
+    if (cols["display_order"])        row.displayOrder       = Number(cols["display_order"]) || 0
+    return row
+  }).filter((r) => r.processType)
+}
+
+function ImportBanner({ result, onClose }: { result: ImportResult; onClose: () => void }) {
+  return (
+    <div className="rounded-xl border bg-card p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">Import complete</p>
+        <button onClick={onClose}><X className="size-4 text-muted-foreground" /></button>
+      </div>
+      <div className="flex gap-4 text-sm">
+        <span className="text-emerald-600">✓ {result.created} created</span>
+        <span className="text-amber-600">⊖ {result.skipped} skipped (duplicates)</span>
+        {result.errors.length > 0 && <span className="text-destructive">✗ {result.errors.length} errors</span>}
+      </div>
+      {result.errors.length > 0 && (
+        <ul className="text-xs text-destructive space-y-0.5 max-h-24 overflow-auto">
+          {result.errors.map((e, i) => <li key={i}>Row {e.row}: {e.message}</li>)}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function StatusBadge({ isActive }: { isActive: boolean }) {
+  return isActive ? (
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+      <CheckCircle2 className="size-3" /> Active
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-200">
+      <XCircle className="size-3" /> Inactive
+    </span>
+  )
+}
+
+function GroupBadge({ group }: { group: string | null }) {
+  if (!group) return <span className="text-muted-foreground/40 italic text-xs">—</span>
+  return (
+    <span className="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 ring-1 ring-purple-200">
+      {group}
+    </span>
+  )
+}
+
+// ── Delete confirmation ────────────────────────────────────────────────────────
+
+function DeleteConfirm({
+  item, onConfirm, onCancel, isDeleting,
+}: {
+  item: ProcessTypeItem
+  onConfirm: () => void
+  onCancel: () => void
+  isDeleting: boolean
+}) {
+  return (
+    <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+      <p className="text-sm font-medium text-destructive">
+        Delete <span className="font-mono">{item.processId}</span> — {item.processType}?
+      </p>
+      <p className="text-xs text-muted-foreground">This action cannot be undone.</p>
+      <div className="flex gap-2">
+        <Button size="sm" variant="destructive" onClick={onConfirm} disabled={isDeleting}>
+          {isDeleting && <Loader2 className="mr-1.5 size-3 animate-spin" />}
+          Delete
+        </Button>
+        <Button size="sm" variant="outline" onClick={onCancel} disabled={isDeleting}>
+          Cancel
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
+
+export default function ProcessTypePage() {
+  const { user, getAccessToken } = useAuth()
+  const router = useRouter()
+
+  const [items,       setItems]       = useState<ProcessTypeItem[]>([])
+  const [groups,      setGroups]      = useState<string[]>([])
+  const [isLoading,   setIsLoading]   = useState(true)
+  const [error,       setError]       = useState<string | null>(null)
+  const [search,      setSearch]      = useState("")
+  const [activeGroup, setActiveGroup] = useState<string>("")
+  const [addOpen,     setAddOpen]     = useState(false)
+  const [editItem,    setEditItem]    = useState<ProcessTypeItem | null>(null)
+  const [deleteId,    setDeleteId]    = useState<string | null>(null)
+  const [isDeleting,  setIsDeleting]  = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isExporting,  setIsExporting]  = useState(false)
+  const [isImporting,  setIsImporting]  = useState(false)
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Role guard
+  useEffect(() => {
+    if (user && user.role !== "System Administrator" && user.role !== "User Admin") {
+      router.replace("/admin")
+    }
+  }, [user, router])
+
+  // Load groups once
+  useEffect(() => {
+    const token = getAccessToken()
+    if (!token) return
+    apiListProcessGroups(token).then(setGroups).catch(() => {})
+  }, [getAccessToken])
+
+  // Load / search / filter
+  const load = useCallback(
+    async (q?: string, grp?: string) => {
+      const token = getAccessToken()
+      if (!token) return
+      setIsLoading(true)
+      setError(null)
+      try {
+        const data = await apiListProcessTypes(token, q, grp)
+        setItems(data)
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : "Failed to load process types")
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [getAccessToken],
+  )
+
+  useEffect(() => { load() }, [load])
+
+  function handleSearch(value: string) {
+    setSearch(value)
+    if (searchTimer.current) clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(
+      () => load(value.trim() || undefined, activeGroup || undefined),
+      350,
+    )
+  }
+
+  function handleGroupFilter(grp: string) {
+    setActiveGroup(grp)
+    load(search.trim() || undefined, grp || undefined)
+  }
+
+  async function handleDelete(id: string) {
+    const token = getAccessToken()
+    if (!token) return
+    setIsDeleting(true)
+    setDeleteError(null)
+    try {
+      await apiDeleteProcessType(token, id)
+      setItems((prev) => prev.filter((i) => i.id !== id))
+      setDeleteId(null)
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : "Delete failed")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  async function handleExport() {
+    const token = getAccessToken(); if (!token) return
+    setIsExporting(true)
+    try {
+      const blob = await apiExportProcessTypes(token)
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement("a")
+      a.href = url; a.download = "process_types.csv"; a.click()
+      URL.revokeObjectURL(url)
+    } catch { /* silent */ } finally { setIsExporting(false) }
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; if (!file) return
+    e.target.value = ""
+    const token = getAccessToken(); if (!token) return
+    const rows  = parseCsv(await file.text())
+    if (!rows.length) { setDeleteError("No valid rows found in the CSV file."); return }
+    setIsImporting(true)
+    try {
+      const result = await apiImportProcessTypes(token, rows)
+      setImportResult(result)
+      if (result.created > 0) {
+        load(search.trim() || undefined, activeGroup || undefined)
+        const token2 = getAccessToken()
+        if (token2) apiListProcessGroups(token2).then(setGroups).catch(() => {})
+      }
+    } catch (err) { setDeleteError(err instanceof ApiError ? err.message : "Import failed") }
+    finally { setIsImporting(false) }
+  }
+
+  function handleCreated(newItem: ProcessTypeItem) {
+    setItems((prev) =>
+      [...prev, newItem].sort(
+        (a, b) => a.displayOrder - b.displayOrder || a.processType.localeCompare(b.processType),
+      ),
+    )
+    // Add new group if it's a new one
+    if (newItem.processGroup && !groups.includes(newItem.processGroup)) {
+      setGroups((prev) => [...prev, newItem.processGroup!].sort())
+    }
+  }
+
+  if (!user) return null
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* ── Header ── */}
+      <div className="flex items-center gap-3">
+        <Link
+          href="/admin/configuration"
+          className="flex items-center justify-center size-8 rounded-lg border hover:bg-accent transition-colors"
+        >
+          <ChevronLeft className="size-4" />
+        </Link>
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-purple-500/10">
+          <GitBranch className="size-5 text-purple-600" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Process Types</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage manufacturing process type master data
+          </p>
+        </div>
+      </div>
+
+      {importResult && <ImportBanner result={importResult} onClose={() => setImportResult(null)} />}
+
+      {/* ── Toolbar ── */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-48 max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder="Search by ID, name or group…"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Group filter pills */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            onClick={() => handleGroupFilter("")}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              activeGroup === ""
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80",
+            )}
+          >
+            All
+          </button>
+          {groups.map((g) => (
+            <button
+              key={g}
+              onClick={() => handleGroupFilter(g)}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                activeGroup === g
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80",
+              )}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 ml-auto">
+          <Button variant="outline" size="sm" onClick={downloadTemplate} title="Download CSV template">
+            <Download className="mr-1.5 size-3.5" /> Template
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isImporting}>
+            {isImporting ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Upload className="mr-1.5 size-3.5" />}
+            Import
+          </Button>
+          <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={isExporting}>
+            {isExporting ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Download className="mr-1.5 size-3.5" />}
+            Export
+          </Button>
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="mr-1.5 size-4" /> Add Process Type
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Delete error banner ── */}
+      {deleteError && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <AlertCircle className="size-4 shrink-0" />
+          {deleteError}
+          <button className="ml-auto" onClick={() => setDeleteError(null)}><X className="size-4" /></button>
+        </div>
+      )}
+
+      {/* ── Table ── */}
+      <div className="rounded-xl border bg-card overflow-hidden">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="size-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-destructive">
+            <AlertCircle className="size-4" /> {error}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-2">
+            <GitBranch className="size-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">
+              {search || activeGroup ? "No process types match your filter." : "No process types added yet."}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/40">
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground w-24">ID</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Name</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden lg:table-cell">Details</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden md:table-cell">Group</th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground w-28 hidden sm:table-cell">
+                    <span className="flex items-center justify-center gap-1"><Clock className="size-3" /> Duration</span>
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground w-28 hidden sm:table-cell">
+                    <span className="flex items-center justify-center gap-1"><ShieldCheck className="size-3" /> Clean Room</span>
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground w-24">Status</th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground w-24">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {items.map((item) => (
+                  <>
+                    <tr
+                      key={item.id}
+                      className={cn(
+                        "hover:bg-muted/30 transition-colors",
+                        deleteId === item.id && "bg-destructive/5",
+                      )}
+                    >
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.processId}</td>
+                      <td className="px-4 py-3 font-medium">{item.processType}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs hidden lg:table-cell max-w-xs truncate">
+                        {item.processDetails ?? <span className="italic text-muted-foreground/40">—</span>}
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        <GroupBadge group={item.processGroup} />
+                      </td>
+                      <td className="px-4 py-3 text-center text-muted-foreground tabular-nums hidden sm:table-cell">
+                        {item.typicalDurationMin != null ? `${item.typicalDurationMin} min` : <span className="text-muted-foreground/40 italic">—</span>}
+                      </td>
+                      <td className="px-4 py-3 text-center hidden sm:table-cell">
+                        {item.requiresCleanRoom ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+                            <CheckCircle2 className="size-3" /> Yes
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/50">No</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <StatusBadge isActive={item.isActive} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="icon" variant="ghost" className="size-8"
+                            onClick={() => { setDeleteId(null); setEditItem(item) }}
+                            title="Edit"
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                          <Button
+                            size="icon" variant="ghost"
+                            className="size-8 hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => { setDeleteId(deleteId === item.id ? null : item.id); setDeleteError(null) }}
+                            title="Delete"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                    {deleteId === item.id && (
+                      <tr key={`${item.id}-confirm`}>
+                        <td colSpan={8} className="px-4 pb-3">
+                          <DeleteConfirm
+                            item={item}
+                            onConfirm={() => handleDelete(item.id)}
+                            onCancel={() => { setDeleteId(null); setDeleteError(null) }}
+                            isDeleting={isDeleting}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        {!isLoading && !error && `${items.length} process type${items.length !== 1 ? "s" : ""}`}
+      </p>
+
+      {/* ── Dialogs ── */}
+      <AddProcessTypeDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onCreated={handleCreated}
+        groups={groups}
+      />
+      <EditProcessTypeDialog
+        item={editItem}
+        onClose={() => setEditItem(null)}
+        onUpdated={(updated) => setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))}
+        groups={groups}
+      />
+    </div>
+  )
+}

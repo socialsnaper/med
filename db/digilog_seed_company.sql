@@ -143,7 +143,7 @@ INSERT INTO tenant_pharmacore.roles (role_name, role_group, is_system_role, perm
 
 -- Step 5: Seed users (one per role group + a few extras)
 -- ALL PASSWORDS = Test@1234
--- bcrypt hash: $2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
+-- bcrypt hash: $2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC
 
 INSERT INTO tenant_pharmacore.users (
     company_id, role_id, username, email, password_hash,
@@ -156,7 +156,7 @@ INSERT INTO tenant_pharmacore.users (
     'a1b2c3d4-0001-0001-0001-000000000001',
     (SELECT id FROM tenant_pharmacore.roles WHERE role_name = 'System Administrator'),
     'sysadmin', 'sysadmin@pharmacorelabs.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'System', 'Admin', 'EMP-PC-001', '2023-01-01', TRUE, FALSE
 ),
 
@@ -165,7 +165,7 @@ INSERT INTO tenant_pharmacore.users (
     'a1b2c3d4-0001-0001-0001-000000000001',
     (SELECT id FROM tenant_pharmacore.roles WHERE role_name = 'User Admin'),
     'useradmin', 'useradmin@pharmacorelabs.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Ravi', 'Sharma', 'EMP-PC-002', '2023-02-15', TRUE, FALSE
 ),
 
@@ -174,7 +174,7 @@ INSERT INTO tenant_pharmacore.users (
     'a1b2c3d4-0001-0001-0001-000000000001',
     (SELECT id FROM tenant_pharmacore.roles WHERE role_name = 'QA Shop Floor'),
     'qa_priya', 'priya.qa@pharmacorelabs.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Priya', 'Nair', 'EMP-PC-003', '2023-03-10', TRUE, FALSE
 ),
 
@@ -183,7 +183,7 @@ INSERT INTO tenant_pharmacore.users (
     'a1b2c3d4-0001-0001-0001-000000000001',
     (SELECT id FROM tenant_pharmacore.roles WHERE role_name = 'Batch Record Review'),
     'batch_reviewer', 'batch.review@pharmacorelabs.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Amit', 'Desai', 'EMP-PC-004', '2023-04-01', TRUE, FALSE
 ),
 
@@ -192,7 +192,7 @@ INSERT INTO tenant_pharmacore.users (
     'a1b2c3d4-0001-0001-0001-000000000001',
     (SELECT id FROM tenant_pharmacore.roles WHERE role_name = 'Shop Floor Supervisor'),
     'supervisor_raj', 'raj.supervisor@pharmacorelabs.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Rajesh', 'Kumar', 'EMP-PC-005', '2022-11-20', TRUE, FALSE
 ),
 
@@ -201,7 +201,7 @@ INSERT INTO tenant_pharmacore.users (
     'a1b2c3d4-0001-0001-0001-000000000001',
     (SELECT id FROM tenant_pharmacore.roles WHERE role_name = 'EBR Operator'),
     'ebr_sneha', 'sneha.ebr@pharmacorelabs.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Sneha', 'Patil', 'EMP-PC-006', '2023-06-01', TRUE, FALSE
 ),
 
@@ -210,7 +210,7 @@ INSERT INTO tenant_pharmacore.users (
     'a1b2c3d4-0001-0001-0001-000000000001',
     (SELECT id FROM tenant_pharmacore.roles WHERE role_name = 'Cleaning Operator'),
     'cleaning_arjun', 'arjun.clean@pharmacorelabs.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Arjun', 'Mehta', 'EMP-PC-007', '2023-07-15', TRUE, FALSE
 ),
 
@@ -219,7 +219,7 @@ INSERT INTO tenant_pharmacore.users (
     'a1b2c3d4-0001-0001-0001-000000000001',
     (SELECT id FROM tenant_pharmacore.roles WHERE role_name = 'Maintenance Technician'),
     'maint_vikram', 'vikram.maint@pharmacorelabs.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Vikram', 'Singh', 'EMP-PC-008', '2022-09-01', TRUE, FALSE
 ),
 
@@ -228,7 +228,7 @@ INSERT INTO tenant_pharmacore.users (
     'a1b2c3d4-0001-0001-0001-000000000001',
     (SELECT id FROM tenant_pharmacore.roles WHERE role_name = 'Warehouse Operator'),
     'warehouse_deepa', 'deepa.warehouse@pharmacorelabs.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Deepa', 'Joshi', 'EMP-PC-009', '2023-08-20', TRUE, FALSE
 ),
 
@@ -237,7 +237,7 @@ INSERT INTO tenant_pharmacore.users (
     'a1b2c3d4-0001-0001-0001-000000000001',
     (SELECT id FROM tenant_pharmacore.roles WHERE role_name = 'Master Data Author'),
     'data_author', 'data.author@pharmacorelabs.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Neha', 'Verma', 'EMP-PC-010', '2023-05-10', TRUE, FALSE
 );
 
@@ -412,35 +412,35 @@ INSERT INTO tenant_medsync.users (
     'b2c3d4e5-0002-0002-0002-000000000002',
     (SELECT id FROM tenant_medsync.roles WHERE role_name = 'System Administrator'),
     'sysadmin', 'sysadmin@medsyncindustries.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'System', 'Admin', 'EMP-MS-001', '2022-06-01', TRUE, FALSE
 ),
 (
     'b2c3d4e5-0002-0002-0002-000000000002',
     (SELECT id FROM tenant_medsync.roles WHERE role_name = 'QA Shop Floor'),
     'qa_anita', 'anita.qa@medsyncindustries.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Anita', 'Rao', 'EMP-MS-002', '2022-09-15', TRUE, FALSE
 ),
 (
     'b2c3d4e5-0002-0002-0002-000000000002',
     (SELECT id FROM tenant_medsync.roles WHERE role_name = 'Shop Floor Supervisor'),
     'supervisor_kiran', 'kiran.sup@medsyncindustries.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Kiran', 'Bhat', 'EMP-MS-003', '2022-12-01', TRUE, FALSE
 ),
 (
     'b2c3d4e5-0002-0002-0002-000000000002',
     (SELECT id FROM tenant_medsync.roles WHERE role_name = 'Operator'),
     'operator_suresh', 'suresh.op@medsyncindustries.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Suresh', 'Pillai', 'EMP-MS-004', '2023-01-10', TRUE, FALSE
 ),
 (
     'b2c3d4e5-0002-0002-0002-000000000002',
     (SELECT id FROM tenant_medsync.roles WHERE role_name = 'Maintenance Technician'),
     'maint_gopal', 'gopal.maint@medsyncindustries.com',
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2b$12$AC.bY.rX2mAJV1zVKcphGuAdtRZiqHnaZWlIvNM1w4gIQ4tAMDseC',
     'Gopal', 'Nair', 'EMP-MS-005', '2023-03-20', TRUE, FALSE
 );
 

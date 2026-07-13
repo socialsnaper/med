@@ -1,0 +1,377 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PUBLIC SCHEMA — Global / cross-tenant tables
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Company {
+  id           String  @id @default(uuid()) @db.Uuid
+  companyCode  String  @unique @map("company_code") @db.VarChar(50)
+  companyName  String  @map("company_name") @db.VarChar(255)
+  schemaName   String  @map("schema_name") @db.VarChar(100)
+  logoUrl      String? @map("logo_url") @db.VarChar(500)
+  contactEmail String  @map("contact_email") @db.VarChar(255)
+  isActive     Boolean @default(true) @map("is_active")
+
+  @@map("companies")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TENANT SCHEMA — Per-company isolated tables
+// Schema name is dynamic at runtime (e.g. tenant_pharmacore, tenant_medsync).
+// In code, set search_path or use a per-tenant Prisma client instance.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Role {
+  id           String   @id @default(uuid()) @db.Uuid
+  roleName     String   @unique @map("role_name") @db.VarChar(100)
+  roleGroup    String?  @map("role_group") @db.VarChar(50)
+  /// JSONB permissions map e.g. {"batch":"full","users":"read"}
+  permissions  Json     @default("{}")
+  isSystemRole Boolean  @default(false) @map("is_system_role")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdBy    String?  @map("created_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id                 String    @id @default(uuid()) @db.Uuid
+  companyId          String    @map("company_id") @db.Uuid
+  roleId             String    @map("role_id") @db.Uuid
+  username           String    @unique @db.VarChar(100)
+  email              String    @unique @db.VarChar(255)
+  passwordHash       String    @map("password_hash") @db.VarChar(255)
+  firstName          String    @map("first_name") @db.VarChar(100)
+  lastName           String    @map("last_name") @db.VarChar(100)
+  employeeCode       String?   @unique @map("employee_code") @db.VarChar(50)
+  profilePicUrl      String?   @map("profile_pic_url") @db.VarChar(500)
+  dateOfJoining      DateTime? @map("date_of_joining") @db.Date
+  isActive           Boolean   @default(true) @map("is_active")
+  mustChangePassword Boolean   @default(true) @map("must_change_password")
+  lastLoginAt        DateTime? @map("last_login_at") @db.Timestamptz(6)
+  createdById        String?   @map("created_by") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // ── TOTP / 2FA (alter_user_table.sql) ──────────────────────────────────────
+  totpSecret     String?   @map("totp_secret")
+  totpEnabled    Boolean   @default(false) @map("totp_enabled")
+  totpLastUsedAt DateTime? @map("totp_last_used_at") @db.Timestamptz(6)
+  twoFaResetBy   String?   @map("two_fa_reset_by") @db.Uuid
+  twoFaResetAt   DateTime? @map("two_fa_reset_at") @db.Timestamptz(6)
+
+  // ── Relations ───────────────────────────────────────────────────────────────
+  role               Role              @relation(fields: [roleId], references: [id])
+  /// User who created this account (self-referencing)
+  createdByUser      User?             @relation("CreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdUsers       User[]            @relation("CreatedBy")
+  /// Admin who last reset 2FA for this user (self-referencing)
+  twoFaResetByUser   User?             @relation("TwoFaReset", fields: [twoFaResetBy], references: [id], onDelete: SetNull)
+  twoFaResetForUsers User[]            @relation("TwoFaReset")
+  refreshTokens      RefreshToken[]
+  loginAuditLogs     LoginAudit[]
+  totpBackupCodes    TotpBackupCode[]
+  createdRoomTypes    RoomType[]        @relation("RoomTypeCreatedBy")
+  updatedRoomTypes    RoomType[]        @relation("RoomTypeUpdatedBy")
+  createdProcessTypes ProcessType[]     @relation("ProcessTypeCreatedBy")
+  updatedProcessTypes ProcessType[]     @relation("ProcessTypeUpdatedBy")
+  createdCleaningEquip    CleaningEquipment[]  @relation("CleaningEquipmentCreatedBy")
+  updatedCleaningEquip    CleaningEquipment[]  @relation("CleaningEquipmentUpdatedBy")
+  createdPackagingTypes   PackagingType[]      @relation("PackagingTypeCreatedBy")
+  updatedPackagingTypes   PackagingType[]      @relation("PackagingTypeUpdatedBy")
+  createdFunctionTypes    FunctionType[]       @relation("FunctionTypeCreatedBy")
+  updatedFunctionTypes    FunctionType[]       @relation("FunctionTypeUpdatedBy")
+  createdStandardWeights  StandardWeight[]     @relation("StandardWeightCreatedBy")
+  updatedStandardWeights  StandardWeight[]     @relation("StandardWeightUpdatedBy")
+  createdScales           Scale[]              @relation("ScaleCreatedBy")
+  updatedScales           Scale[]              @relation("ScaleUpdatedBy")
+
+  @@index([username])
+  @@index([isActive])
+  @@map("users")
+}
+
+model LoginAttempt {
+  id             BigInt         @id @default(autoincrement())
+  identifier     String         @db.VarChar(255)
+  identifierType String         @map("identifier_type") @db.VarChar(10)
+  attemptCount   Int            @default(1) @map("attempt_count")
+  lockedUntil    DateTime?      @map("locked_until") @db.Timestamptz(6)
+  lastAttemptAt  DateTime       @default(now()) @map("last_attempt_at") @db.Timestamptz(6)
+
+  @@unique([identifier, identifierType])
+  @@index([identifier, identifierType])
+  @@map("login_attempts")
+}
+
+model LoginAudit {
+  id                BigInt         @id @default(autoincrement())
+  userId            String?        @map("user_id") @db.Uuid
+  usernameAttempted String         @map("username_attempted") @db.VarChar(100)
+  eventType         String         @map("event_type") @db.VarChar(30)
+  /// IPv4 / IPv6 stored as text; PostgreSQL INET type
+  ipAddress         String?        @map("ip_address")
+  userAgent         String?        @map("user_agent")
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([eventType, createdAt(sort: Desc)])
+  @@map("login_audit")
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  tokenHash  String   @unique @map("token_hash") @db.VarChar(255)
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(6)
+  isRevoked  Boolean  @default(false) @map("is_revoked")
+  deviceInfo String?  @map("device_info") @db.VarChar(255)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+/// One-time TOTP recovery codes. Each code is bcrypt-hashed before storage.
+/// Codes are single-use — is_used flips to TRUE and used_at is stamped atomically.
+model TotpBackupCode {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  /// bcrypt hash of the plaintext backup code. Raw code shown to user once, then discarded.
+  codeHash  String    @map("code_hash") @db.VarChar(255)
+  isUsed    Boolean   @default(false) @map("is_used")
+  /// NULL while is_used = FALSE; set in the same transaction that flips is_used (GMP audit).
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId], map: "idx_totp_backup_codes_unused")
+  @@map("totp_backup_codes")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIGURATION — Master data tables (one-time setup by admins)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RoomType {
+  id              String   @id @default(uuid()) @db.Uuid
+  /// Human-readable code: RT-001, RT-002 …
+  roomTypeId      String   @unique @map("room_type_id") @db.VarChar(20)
+  roomTypeName    String   @unique @map("room_type_name") @db.VarChar(150)
+  roomTypeDetails String?  @map("room_type_details")
+  displayOrder    Int      @default(0) @map("display_order")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdBy       String?  @map("created_by") @db.Uuid
+  updatedBy       String?  @map("updated_by") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser User? @relation("RoomTypeCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User? @relation("RoomTypeUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
+  @@index([displayOrder])
+  @@map("room_types")
+}
+
+model ProcessType {
+  id                  String   @id @default(uuid()) @db.Uuid
+  /// Human-readable code: PR-001, PR-002 …
+  processId           String   @unique @map("process_id") @db.VarChar(20)
+  processType         String   @unique @map("process_type") @db.VarChar(150)
+  processDetails      String?  @map("process_details")
+  processGroup        String?  @map("process_group") @db.VarChar(100)
+  typicalDurationMin  Int?     @map("typical_duration_min")
+  requiresCleanRoom   Boolean  @default(false) @map("requires_clean_room")
+  displayOrder        Int      @default(0) @map("display_order")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdBy           String?  @map("created_by") @db.Uuid
+  updatedBy           String?  @map("updated_by") @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser User? @relation("ProcessTypeCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User? @relation("ProcessTypeUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
+  @@index([processGroup])
+  @@index([displayOrder])
+  @@map("process_types")
+}
+
+model CleaningEquipment {
+  id                      String   @id @default(uuid()) @db.Uuid
+  /// Human-readable code: CE-001, CE-002 …
+  equipmentCode           String   @unique @map("equipment_code") @db.VarChar(20)
+  equipmentName           String   @unique @map("equipment_name") @db.VarChar(150)
+  equipmentDetails        String?  @map("equipment_details")
+  /// dry | wet | sanitizing | general
+  cleaningType            String   @default("general") @map("cleaning_type") @db.VarChar(20)
+  material                String?  @map("material") @db.VarChar(100)
+  requiresReplacement     Boolean  @default(false) @map("requires_replacement")
+  replacementIntervalDays Int?     @map("replacement_interval_days")
+  displayOrder            Int      @default(0) @map("display_order")
+  isActive                Boolean  @default(true) @map("is_active")
+  createdBy               String?  @map("created_by") @db.Uuid
+  updatedBy               String?  @map("updated_by") @db.Uuid
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser User? @relation("CleaningEquipmentCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User? @relation("CleaningEquipmentUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
+  @@index([cleaningType])
+  @@index([displayOrder])
+  @@map("cleaning_equipment")
+}
+
+model PackagingType {
+  id                    String   @id @default(uuid()) @db.Uuid
+  /// Human-readable code: PT-001, PT-002 …
+  packagingTypeId       String   @unique @map("packaging_type_id") @db.VarChar(20)
+  packagingTypeName     String   @unique @map("packaging_type_name") @db.VarChar(150)
+  packagingTypeDetails  String?  @map("packaging_type_details")
+  /// blister | bottle | sachet | strip | vial | ampoule | tube | pouch | other
+  packagingCategory     String?  @map("packaging_category") @db.VarChar(20)
+  primaryMaterial       String?  @map("primary_material") @db.VarChar(100)
+  packUnit              String?  @map("pack_unit") @db.VarChar(50)
+  standardPackSize      Int?     @map("standard_pack_size")
+  storageConditions     String?  @map("storage_conditions") @db.VarChar(150)
+  displayOrder          Int      @default(0) @map("display_order")
+  isActive              Boolean  @default(true) @map("is_active")
+  createdBy             String?  @map("created_by") @db.Uuid
+  updatedBy             String?  @map("updated_by") @db.Uuid
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser User? @relation("PackagingTypeCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User? @relation("PackagingTypeUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
+  @@index([packagingCategory])
+  @@index([displayOrder])
+  @@map("packaging_types")
+}
+
+model FunctionType {
+  id                    String   @id @default(uuid()) @db.Uuid
+  /// Human-readable code: FT-001, FT-002 …
+  functionTypeId        String   @unique @map("function_type_id") @db.VarChar(20)
+  functionTypeName      String   @unique @map("function_type_name") @db.VarChar(100)
+  functionTypeDetails   String?  @map("function_type_details")
+  canSignOff            Boolean  @default(false) @map("can_sign_off")
+  canOperateBatch       Boolean  @default(false) @map("can_operate_batch")
+  canPerformCleaning    Boolean  @default(false) @map("can_perform_cleaning")
+  canPerformMaintenance Boolean  @default(false) @map("can_perform_maintenance")
+  displayOrder          Int      @default(0) @map("display_order")
+  isActive              Boolean  @default(true) @map("is_active")
+  createdBy             String?  @map("created_by") @db.Uuid
+  updatedBy             String?  @map("updated_by") @db.Uuid
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser User? @relation("FunctionTypeCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User? @relation("FunctionTypeUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
+  @@index([displayOrder])
+  @@map("function_types")
+}
+
+model StandardWeight {
+  id                       String    @id @default(uuid()) @db.Uuid
+  slid                     Int       @default(autoincrement()) @map("slid")
+  weightSerialNo           String    @unique @map("weight_serial_no") @db.VarChar(20)
+  standardWeight           String    @map("standard_weight") @db.VarChar(20)
+  weightValueGrams         Decimal   @map("weight_value_grams") @db.Decimal(12, 4)
+  lastCalibratedOn         DateTime? @map("last_calibrated_on") @db.Date
+  nextCalibrationDue       DateTime? @map("next_calibration_due") @db.Date
+  calibrationIntervalDays  Int       @default(365) @map("calibration_interval_days")
+  toleranceLimit           String?   @map("tolerance_limit") @db.VarChar(20)
+  toleranceGrams           Decimal?  @map("tolerance_grams") @db.Decimal(10, 6)
+  calibrationLab           String?   @map("calibration_lab") @db.VarChar(150)
+  certificateNumber        String?   @map("certificate_number") @db.VarChar(100)
+  certificateUrl           String?   @map("certificate_url") @db.VarChar(500)
+  material                 String?   @map("material") @db.VarChar(100)
+  accuracyClass            String?   @map("accuracy_class") @db.VarChar(20)
+  storageLocation          String?   @map("storage_location") @db.VarChar(150)
+  isActive                 Boolean   @default(true) @map("is_active")
+  inactiveReason           String?   @map("inactive_reason")
+  createdBy                String?   @map("created_by") @db.Uuid
+  updatedBy                String?   @map("updated_by") @db.Uuid
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser User? @relation("StandardWeightCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User? @relation("StandardWeightUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
+  @@index([nextCalibrationDue])
+  @@index([weightValueGrams])
+  @@map("standard_weights")
+}
+
+model Scale {
+  id                        String    @id @default(uuid()) @db.Uuid
+  slid                      Int       @default(autoincrement()) @map("slid")
+  scaleId                   String    @unique @map("scale_id") @db.VarChar(20)
+  scaleNumber               String    @unique @map("scale_number") @db.VarChar(50)
+  minRange                  String?   @map("min_range") @db.VarChar(20)
+  minRangeGrams             Decimal?  @map("min_range_grams") @db.Decimal(12, 6)
+  maxRange                  String?   @map("max_range") @db.VarChar(20)
+  maxRangeGrams             Decimal?  @map("max_range_grams") @db.Decimal(12, 6)
+  capacity                  String?   @map("capacity") @db.VarChar(20)
+  capacityGrams             Decimal?  @map("capacity_grams") @db.Decimal(12, 6)
+  leastCount                String?   @map("least_count") @db.VarChar(20)
+  leastCountGrams           Decimal?  @map("least_count_grams") @db.Decimal(12, 8)
+  lastVerifiedOn            DateTime? @map("last_verified_on") @db.Date
+  nextVerificationDue       DateTime? @map("next_verification_due") @db.Date
+  verificationIntervalDays  Int       @default(1) @map("verification_interval_days")
+  formVerificationNo        String?   @map("form_verification_no") @db.VarChar(20)
+  nextCalibrationDue        DateTime? @map("next_calibration_due") @db.Date
+  calibrationIntervalDays   Int       @default(365) @map("calibration_interval_days")
+  formCalibrationNo         String?   @map("form_calibration_no") @db.VarChar(20)
+  manufacturer              String?   @map("manufacturer") @db.VarChar(100)
+  modelNumber               String?   @map("model_number") @db.VarChar(100)
+  /// analytical | precision | industrial | moisture | other
+  scaleType                 String?   @map("scale_type") @db.VarChar(20)
+  /// active | quarantined | under_repair | retired
+  status                    String    @default("active") @map("status") @db.VarChar(20)
+  statusReason              String?   @map("status_reason")
+  isActive                  Boolean   @default(true) @map("is_active")
+  createdBy                 String?   @map("created_by") @db.Uuid
+  updatedBy                 String?   @map("updated_by") @db.Uuid
+  createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser User? @relation("ScaleCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User? @relation("ScaleUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([isActive, status])
+  @@index([nextVerificationDue])
+  @@index([nextCalibrationDue])
+  @@index([scaleType])
+  @@map("scales")
+}
