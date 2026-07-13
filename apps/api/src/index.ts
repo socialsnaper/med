@@ -17,8 +17,8 @@ import { processTypesRouter }      from './routes/process-types.routes';
 import { cleaningEquipmentRouter } from './routes/cleaning-equipment.routes';
 import { packagingTypesRouter }    from './routes/packaging-types.routes';
 import { functionTypesRouter }     from './routes/function-types.routes';
-import { weightsRouter }           from './routes/weights.routes';
 import { scalesRouter }            from './routes/scales.routes';
+import { weightsRouter }           from './routes/weights.routes';
 import { AuthError }               from './services/auth.service';
 import { UserError }               from './services/users.service';
 import { RoomTypeError }           from './services/room-types.service';
@@ -26,8 +26,8 @@ import { ProcessTypeError }        from './services/process-types.service';
 import { CleaningEquipmentError }  from './services/cleaning-equipment.service';
 import { PackagingTypeError }      from './services/packaging-types.service';
 import { FunctionTypeError }       from './services/function-types.service';
-import { WeightError }             from './services/weights.service';
 import { ScaleError }              from './services/scales.service';
+import { WeightError }             from './services/weights.service';
 import { disconnectAll } from '../lib/prisma';
 
 // ── App ───────────────────────────────────────────────────────────────────────
@@ -61,8 +61,8 @@ app.use('/api/process-types',      processTypesRouter);
 app.use('/api/cleaning-equipment', cleaningEquipmentRouter);
 app.use('/api/packaging-types',   packagingTypesRouter);
 app.use('/api/function-types',    functionTypesRouter);
-app.use('/api/weights',           weightsRouter);
 app.use('/api/scales',            scalesRouter);
+app.use('/api/weights',           weightsRouter);
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
 
@@ -74,7 +74,7 @@ app.use((_req: Request, res: Response) => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  if (err instanceof AuthError || err instanceof UserError || err instanceof RoomTypeError || err instanceof ProcessTypeError || err instanceof CleaningEquipmentError || err instanceof PackagingTypeError || err instanceof FunctionTypeError || err instanceof WeightError || err instanceof ScaleError) {
+  if (err instanceof AuthError || err instanceof UserError || err instanceof RoomTypeError || err instanceof ProcessTypeError || err instanceof CleaningEquipmentError || err instanceof PackagingTypeError || err instanceof FunctionTypeError || err instanceof ScaleError || err instanceof WeightError) {
     return res.status(err.statusCode).json({
       success: false,
       error:   err.code,

@@ -96,10 +96,6 @@ model User {
   updatedPackagingTypes   PackagingType[]      @relation("PackagingTypeUpdatedBy")
   createdFunctionTypes    FunctionType[]       @relation("FunctionTypeCreatedBy")
   updatedFunctionTypes    FunctionType[]       @relation("FunctionTypeUpdatedBy")
-  createdStandardWeights  StandardWeight[]     @relation("StandardWeightCreatedBy")
-  updatedStandardWeights  StandardWeight[]     @relation("StandardWeightUpdatedBy")
-  createdScales           Scale[]              @relation("ScaleCreatedBy")
-  updatedScales           Scale[]              @relation("ScaleUpdatedBy")
 
   @@index([username])
   @@index([isActive])
@@ -298,80 +294,4 @@ model FunctionType {
   @@index([isActive])
   @@index([displayOrder])
   @@map("function_types")
-}
-
-model StandardWeight {
-  id                       String    @id @default(uuid()) @db.Uuid
-  slid                     Int       @default(autoincrement()) @map("slid")
-  weightSerialNo           String    @unique @map("weight_serial_no") @db.VarChar(20)
-  standardWeight           String    @map("standard_weight") @db.VarChar(20)
-  weightValueGrams         Decimal   @map("weight_value_grams") @db.Decimal(12, 4)
-  lastCalibratedOn         DateTime? @map("last_calibrated_on") @db.Date
-  nextCalibrationDue       DateTime? @map("next_calibration_due") @db.Date
-  calibrationIntervalDays  Int       @default(365) @map("calibration_interval_days")
-  toleranceLimit           String?   @map("tolerance_limit") @db.VarChar(20)
-  toleranceGrams           Decimal?  @map("tolerance_grams") @db.Decimal(10, 6)
-  calibrationLab           String?   @map("calibration_lab") @db.VarChar(150)
-  certificateNumber        String?   @map("certificate_number") @db.VarChar(100)
-  certificateUrl           String?   @map("certificate_url") @db.VarChar(500)
-  material                 String?   @map("material") @db.VarChar(100)
-  accuracyClass            String?   @map("accuracy_class") @db.VarChar(20)
-  storageLocation          String?   @map("storage_location") @db.VarChar(150)
-  isActive                 Boolean   @default(true) @map("is_active")
-  inactiveReason           String?   @map("inactive_reason")
-  createdBy                String?   @map("created_by") @db.Uuid
-  updatedBy                String?   @map("updated_by") @db.Uuid
-  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  createdByUser User? @relation("StandardWeightCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  updatedByUser User? @relation("StandardWeightUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
-
-  @@index([isActive])
-  @@index([nextCalibrationDue])
-  @@index([weightValueGrams])
-  @@map("standard_weights")
-}
-
-model Scale {
-  id                        String    @id @default(uuid()) @db.Uuid
-  slid                      Int       @default(autoincrement()) @map("slid")
-  scaleId                   String    @unique @map("scale_id") @db.VarChar(20)
-  scaleNumber               String    @unique @map("scale_number") @db.VarChar(50)
-  minRange                  String?   @map("min_range") @db.VarChar(20)
-  minRangeGrams             Decimal?  @map("min_range_grams") @db.Decimal(12, 6)
-  maxRange                  String?   @map("max_range") @db.VarChar(20)
-  maxRangeGrams             Decimal?  @map("max_range_grams") @db.Decimal(12, 6)
-  capacity                  String?   @map("capacity") @db.VarChar(20)
-  capacityGrams             Decimal?  @map("capacity_grams") @db.Decimal(12, 6)
-  leastCount                String?   @map("least_count") @db.VarChar(20)
-  leastCountGrams           Decimal?  @map("least_count_grams") @db.Decimal(12, 8)
-  lastVerifiedOn            DateTime? @map("last_verified_on") @db.Date
-  nextVerificationDue       DateTime? @map("next_verification_due") @db.Date
-  verificationIntervalDays  Int       @default(1) @map("verification_interval_days")
-  formVerificationNo        String?   @map("form_verification_no") @db.VarChar(20)
-  nextCalibrationDue        DateTime? @map("next_calibration_due") @db.Date
-  calibrationIntervalDays   Int       @default(365) @map("calibration_interval_days")
-  formCalibrationNo         String?   @map("form_calibration_no") @db.VarChar(20)
-  manufacturer              String?   @map("manufacturer") @db.VarChar(100)
-  modelNumber               String?   @map("model_number") @db.VarChar(100)
-  /// analytical | precision | industrial | moisture | other
-  scaleType                 String?   @map("scale_type") @db.VarChar(20)
-  /// active | quarantined | under_repair | retired
-  status                    String    @default("active") @map("status") @db.VarChar(20)
-  statusReason              String?   @map("status_reason")
-  isActive                  Boolean   @default(true) @map("is_active")
-  createdBy                 String?   @map("created_by") @db.Uuid
-  updatedBy                 String?   @map("updated_by") @db.Uuid
-  createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                 DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  createdByUser User? @relation("ScaleCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  updatedByUser User? @relation("ScaleUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
-
-  @@index([isActive, status])
-  @@index([nextVerificationDue])
-  @@index([nextCalibrationDue])
-  @@index([scaleType])
-  @@map("scales")
 }

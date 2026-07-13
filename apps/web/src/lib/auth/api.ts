@@ -849,148 +849,10 @@ export function apiImportFunctionTypes(
   return apiPost<ImportResult>("/api/function-types/import", { rows }, accessToken)
 }
 
-// ── Standard Weights ──────────────────────────────────────────────────────────
-
-export interface StandardWeightItem {
-  id:                      string
-  slid:                    number
-  weightSerialNo:          string
-  standardWeight:          string
-  weightValueGrams:        number
-  lastCalibratedOn:        string | null
-  nextCalibrationDue:      string | null
-  calibrationIntervalDays: number
-  toleranceLimit:          string | null
-  toleranceGrams:          number | null
-  calibrationLab:          string | null
-  certificateNumber:       string | null
-  certificateUrl:          string | null
-  material:                string | null
-  accuracyClass:           string | null
-  storageLocation:         string | null
-  isActive:                boolean
-  inactiveReason:          string | null
-  createdAt:               string
-  updatedAt:               string
-}
-
-export interface CreateWeightPayload {
-  weightSerialNo:          string
-  standardWeight:          string
-  weightValueGrams:        number
-  lastCalibratedOn?:       string | null
-  nextCalibrationDue?:     string | null
-  calibrationIntervalDays?: number
-  toleranceLimit?:         string | null
-  toleranceGrams?:         number | null
-  calibrationLab?:         string | null
-  certificateNumber?:      string | null
-  certificateUrl?:         string | null
-  material?:               string | null
-  accuracyClass?:          string | null
-  storageLocation?:        string | null
-  isActive?:               boolean
-  inactiveReason?:         string | null
-}
-
-export interface UpdateWeightPayload {
-  weightSerialNo?:         string
-  standardWeight?:         string
-  weightValueGrams?:       number
-  lastCalibratedOn?:       string | null
-  nextCalibrationDue?:     string | null
-  calibrationIntervalDays?: number
-  toleranceLimit?:         string | null
-  toleranceGrams?:         number | null
-  calibrationLab?:         string | null
-  certificateNumber?:      string | null
-  certificateUrl?:         string | null
-  material?:               string | null
-  accuracyClass?:          string | null
-  storageLocation?:        string | null
-  isActive?:               boolean
-  inactiveReason?:         string | null
-}
-
-export interface WeightImportRow {
-  weightSerialNo:          string
-  standardWeight:          string
-  weightValueGrams:        number
-  lastCalibratedOn?:       string | null
-  nextCalibrationDue?:     string | null
-  calibrationIntervalDays?: number
-  toleranceLimit?:         string | null
-  material?:               string | null
-  accuracyClass?:          string | null
-  storageLocation?:        string | null
-  calibrationLab?:         string | null
-  certificateNumber?:      string | null
-}
-
-export function apiListWeights(
-  accessToken: string,
-  search?: string,
-): Promise<StandardWeightItem[]> {
-  const qs = search ? `?search=${encodeURIComponent(search)}` : ""
-  return apiGet<StandardWeightItem[]>(`/api/weights${qs}`, accessToken)
-}
-
-export function apiCreateWeight(
-  accessToken: string,
-  payload:     CreateWeightPayload,
-): Promise<StandardWeightItem> {
-  return apiPost<StandardWeightItem>("/api/weights", payload, accessToken)
-}
-
-export function apiUpdateWeight(
-  accessToken: string,
-  id:          string,
-  payload:     UpdateWeightPayload,
-): Promise<StandardWeightItem> {
-  return apiFetch<StandardWeightItem>(`/api/weights/${id}`, {
-    method: "PATCH",
-    body:   JSON.stringify(payload),
-    token:  accessToken,
-  })
-}
-
-export function apiDeleteWeight(
-  accessToken: string,
-  id:          string,
-): Promise<null> {
-  return apiFetch<null>(`/api/weights/${id}`, {
-    method: "DELETE",
-    token:  accessToken,
-  })
-}
-
-export async function apiExportWeights(accessToken: string): Promise<Blob> {
-  const res = await fetch(`${API_BASE}/api/weights/export`, {
-    method:      "GET",
-    credentials: "include",
-    headers:     { Authorization: `Bearer ${accessToken}` },
-  })
-  if (!res.ok) {
-    let code = "UNKNOWN", message = "Export failed"
-    try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ }
-    throw new ApiError(code, message, res.status)
-  }
-  return res.blob()
-}
-
-export function apiImportWeights(
-  accessToken: string,
-  rows:        WeightImportRow[],
-): Promise<ImportResult> {
-  return apiPost<ImportResult>("/api/weights/import", { rows }, accessToken)
-}
-
 // ── Scales ────────────────────────────────────────────────────────────────────
 
-export const SCALE_TYPES    = ['analytical', 'precision', 'industrial', 'moisture', 'other'] as const
-export const SCALE_STATUSES = ['active', 'quarantined', 'under_repair', 'retired'] as const
-export type ScaleType   = typeof SCALE_TYPES[number]
-export type ScaleStatus = typeof SCALE_STATUSES[number]
+export const SCALE_TYPES    = ["analytical", "precision", "industrial", "moisture", "other"] as const
+export const SCALE_STATUSES = ["active", "quarantined", "under_repair", "retired"] as const
 
 export interface ScaleItem {
   id:                       string
@@ -1014,8 +876,8 @@ export interface ScaleItem {
   formCalibrationNo:        string | null
   manufacturer:             string | null
   modelNumber:              string | null
-  scaleType:                ScaleType | null
-  status:                   ScaleStatus
+  scaleType:                string | null
+  status:                   string
   statusReason:             string | null
   isActive:                 boolean
   createdAt:                string
@@ -1024,14 +886,13 @@ export interface ScaleItem {
 
 export interface CreateScalePayload {
   scaleNumber:              string
+  scaleType?:               string | null
   minRange?:                string | null
-  minRangeGrams?:           number | null
   maxRange?:                string | null
-  maxRangeGrams?:           number | null
   capacity?:                string | null
-  capacityGrams?:           number | null
   leastCount?:              string | null
-  leastCountGrams?:         number | null
+  manufacturer?:            string | null
+  modelNumber?:             string | null
   lastVerifiedOn?:          string | null
   nextVerificationDue?:     string | null
   verificationIntervalDays?: number
@@ -1039,10 +900,7 @@ export interface CreateScalePayload {
   nextCalibrationDue?:      string | null
   calibrationIntervalDays?: number
   formCalibrationNo?:       string | null
-  manufacturer?:            string | null
-  modelNumber?:             string | null
-  scaleType?:               ScaleType | null
-  status?:                  ScaleStatus
+  status?:                  string
   statusReason?:            string | null
   isActive?:                boolean
 }
@@ -1051,14 +909,13 @@ export type UpdateScalePayload = Partial<CreateScalePayload>
 
 export interface ScaleImportRow {
   scaleNumber:              string
+  scaleType?:               string | null
   minRange?:                string | null
-  minRangeGrams?:           number | null
   maxRange?:                string | null
-  maxRangeGrams?:           number | null
   capacity?:                string | null
-  capacityGrams?:           number | null
   leastCount?:              string | null
-  leastCountGrams?:         number | null
+  manufacturer?:            string | null
+  modelNumber?:             string | null
   lastVerifiedOn?:          string | null
   nextVerificationDue?:     string | null
   verificationIntervalDays?: number
@@ -1066,21 +923,18 @@ export interface ScaleImportRow {
   nextCalibrationDue?:      string | null
   calibrationIntervalDays?: number
   formCalibrationNo?:       string | null
-  manufacturer?:            string | null
-  modelNumber?:             string | null
-  scaleType?:               ScaleType | null
 }
 
 export function apiListScales(
   accessToken: string,
-  search?:    string,
-  scaleType?: string,
-  status?:    string,
+  search?:     string,
+  type?:       string,
+  status?:     string,
 ): Promise<ScaleItem[]> {
   const params = new URLSearchParams()
-  if (search)    params.set("search", search)
-  if (scaleType) params.set("type",   scaleType)
-  if (status)    params.set("status", status)
+  if (search) params.set("search", search)
+  if (type)   params.set("type",   type)
+  if (status) params.set("status", status)
   const qs = params.toString() ? `?${params.toString()}` : ""
   return apiGet<ScaleItem[]>(`/api/scales${qs}`, accessToken)
 }
@@ -1116,9 +970,8 @@ export function apiDeleteScale(
 
 export async function apiExportScales(accessToken: string): Promise<Blob> {
   const res = await fetch(`${API_BASE}/api/scales/export`, {
-    method:      "GET",
-    credentials: "include",
-    headers:     { Authorization: `Bearer ${accessToken}` },
+    method: "GET", credentials: "include",
+    headers: { Authorization: `Bearer ${accessToken}` },
   })
   if (!res.ok) {
     let code = "UNKNOWN", message = "Export failed"
@@ -1133,4 +986,124 @@ export function apiImportScales(
   rows:        ScaleImportRow[],
 ): Promise<ImportResult> {
   return apiPost<ImportResult>("/api/scales/import", { rows }, accessToken)
+}
+
+// ── Standard Weights ──────────────────────────────────────────────────────────
+
+export interface StandardWeightItem {
+  id:                      string
+  slid:                    number
+  weightSerialNo:          string
+  standardWeight:          string
+  weightValueGrams:        number
+  lastCalibratedOn:        string | null
+  nextCalibrationDue:      string | null
+  calibrationIntervalDays: number
+  toleranceLimit:          string | null
+  toleranceGrams:          number | null
+  calibrationLab:          string | null
+  certificateNumber:       string | null
+  certificateUrl:          string | null
+  material:                string | null
+  accuracyClass:           string | null
+  storageLocation:         string | null
+  isActive:                boolean
+  inactiveReason:          string | null
+  createdAt:               string
+  updatedAt:               string
+}
+
+export interface CreateWeightPayload {
+  weightSerialNo:          string
+  standardWeight:          string
+  weightValueGrams:        number
+  lastCalibratedOn?:       string | null
+  nextCalibrationDue?:     string | null
+  calibrationIntervalDays?: number
+  toleranceLimit?:         string | null
+  calibrationLab?:         string | null
+  certificateNumber?:      string | null
+  material?:               string | null
+  accuracyClass?:          string | null
+  storageLocation?:        string | null
+  isActive?:               boolean
+  inactiveReason?:         string | null
+}
+
+export type UpdateWeightPayload = Partial<CreateWeightPayload>
+
+export interface WeightImportRow {
+  weightSerialNo:          string
+  standardWeight:          string
+  weightValueGrams:        number
+  lastCalibratedOn?:       string | null
+  nextCalibrationDue?:     string | null
+  calibrationIntervalDays?: number
+  toleranceLimit?:         string | null
+  material?:               string | null
+  accuracyClass?:          string | null
+  storageLocation?:        string | null
+  calibrationLab?:         string | null
+  certificateNumber?:      string | null
+}
+
+export function apiListWeights(
+  accessToken: string,
+  search?:     string,
+  isActive?:   string,
+): Promise<StandardWeightItem[]> {
+  const params = new URLSearchParams()
+  if (search)   params.set("search",   search)
+  if (isActive) params.set("isActive", isActive)
+  const qs = params.toString() ? `?${params.toString()}` : ""
+  return apiGet<StandardWeightItem[]>(`/api/weights${qs}`, accessToken)
+}
+
+export function apiCreateWeight(
+  accessToken: string,
+  payload:     CreateWeightPayload,
+): Promise<StandardWeightItem> {
+  return apiPost<StandardWeightItem>("/api/weights", payload, accessToken)
+}
+
+export function apiUpdateWeight(
+  accessToken: string,
+  id:          string,
+  payload:     UpdateWeightPayload,
+): Promise<StandardWeightItem> {
+  return apiFetch<StandardWeightItem>(`/api/weights/${id}`, {
+    method: "PATCH",
+    body:   JSON.stringify(payload),
+    token:  accessToken,
+  })
+}
+
+export function apiDeleteWeight(
+  accessToken: string,
+  id:          string,
+): Promise<null> {
+  return apiFetch<null>(`/api/weights/${id}`, {
+    method: "DELETE",
+    token:  accessToken,
+  })
+}
+
+export async function apiExportWeights(accessToken: string): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/api/weights/export`, {
+    method: "GET", credentials: "include",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) {
+    let code = "UNKNOWN", message = "Export failed"
+    try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ }
+    throw new ApiError(code, message, res.status)
+  }
+  return res.blob()
+}
+
+export function apiImportWeights(
+  accessToken: string,
+  rows:        WeightImportRow[],
+): Promise<ImportResult> {
+  return apiPost<ImportResult>("/api/weights/import", { rows }, accessToken)
 }
