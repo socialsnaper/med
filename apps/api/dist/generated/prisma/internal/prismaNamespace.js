@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defineExtension = exports.JsonNullValueFilter = exports.NullsOrder = exports.QueryMode = exports.JsonNullValueInput = exports.SortOrder = exports.TotpBackupCodeScalarFieldEnum = exports.RefreshTokenScalarFieldEnum = exports.LoginAuditScalarFieldEnum = exports.LoginAttemptScalarFieldEnum = exports.UserScalarFieldEnum = exports.RoleScalarFieldEnum = exports.CompanyScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
+exports.defineExtension = exports.JsonNullValueFilter = exports.NullsOrder = exports.QueryMode = exports.JsonNullValueInput = exports.SortOrder = exports.RoomInspection1SopStepMediaScalarFieldEnum = exports.RoomInspection1SopStepScalarFieldEnum = exports.RoomCleaningSopStepScalarFieldEnum = exports.RoomCleaningTypeScalarFieldEnum = exports.FunctionTypeScalarFieldEnum = exports.PackagingTypeScalarFieldEnum = exports.CleaningEquipmentScalarFieldEnum = exports.ProcessTypeScalarFieldEnum = exports.RoomTypeScalarFieldEnum = exports.TotpBackupCodeScalarFieldEnum = exports.RefreshTokenScalarFieldEnum = exports.LoginAuditScalarFieldEnum = exports.LoginAttemptScalarFieldEnum = exports.UserScalarFieldEnum = exports.RoleScalarFieldEnum = exports.CompanyScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/client"));
 /**
  * Prisma Errors
@@ -109,7 +109,16 @@ exports.ModelName = {
     LoginAttempt: 'LoginAttempt',
     LoginAudit: 'LoginAudit',
     RefreshToken: 'RefreshToken',
-    TotpBackupCode: 'TotpBackupCode'
+    TotpBackupCode: 'TotpBackupCode',
+    RoomType: 'RoomType',
+    ProcessType: 'ProcessType',
+    CleaningEquipment: 'CleaningEquipment',
+    PackagingType: 'PackagingType',
+    FunctionType: 'FunctionType',
+    RoomCleaningType: 'RoomCleaningType',
+    RoomCleaningSopStep: 'RoomCleaningSopStep',
+    RoomInspection1SopStep: 'RoomInspection1SopStep',
+    RoomInspection1SopStepMedia: 'RoomInspection1SopStepMedia'
 };
 /**
  * Enums
@@ -196,6 +205,140 @@ exports.TotpBackupCodeScalarFieldEnum = {
     codeHash: 'codeHash',
     isUsed: 'isUsed',
     usedAt: 'usedAt',
+    createdAt: 'createdAt'
+};
+exports.RoomTypeScalarFieldEnum = {
+    id: 'id',
+    roomTypeId: 'roomTypeId',
+    roomTypeName: 'roomTypeName',
+    roomTypeDetails: 'roomTypeDetails',
+    displayOrder: 'displayOrder',
+    isActive: 'isActive',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.ProcessTypeScalarFieldEnum = {
+    id: 'id',
+    processId: 'processId',
+    processType: 'processType',
+    processDetails: 'processDetails',
+    processGroup: 'processGroup',
+    typicalDurationMin: 'typicalDurationMin',
+    requiresCleanRoom: 'requiresCleanRoom',
+    displayOrder: 'displayOrder',
+    isActive: 'isActive',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.CleaningEquipmentScalarFieldEnum = {
+    id: 'id',
+    equipmentCode: 'equipmentCode',
+    equipmentName: 'equipmentName',
+    equipmentDetails: 'equipmentDetails',
+    cleaningType: 'cleaningType',
+    material: 'material',
+    requiresReplacement: 'requiresReplacement',
+    replacementIntervalDays: 'replacementIntervalDays',
+    displayOrder: 'displayOrder',
+    isActive: 'isActive',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.PackagingTypeScalarFieldEnum = {
+    id: 'id',
+    packagingTypeId: 'packagingTypeId',
+    packagingTypeName: 'packagingTypeName',
+    packagingTypeDetails: 'packagingTypeDetails',
+    packagingCategory: 'packagingCategory',
+    primaryMaterial: 'primaryMaterial',
+    packUnit: 'packUnit',
+    standardPackSize: 'standardPackSize',
+    storageConditions: 'storageConditions',
+    displayOrder: 'displayOrder',
+    isActive: 'isActive',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.FunctionTypeScalarFieldEnum = {
+    id: 'id',
+    functionTypeId: 'functionTypeId',
+    functionTypeName: 'functionTypeName',
+    functionTypeDetails: 'functionTypeDetails',
+    canSignOff: 'canSignOff',
+    canOperateBatch: 'canOperateBatch',
+    canPerformCleaning: 'canPerformCleaning',
+    canPerformMaintenance: 'canPerformMaintenance',
+    displayOrder: 'displayOrder',
+    isActive: 'isActive',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.RoomCleaningTypeScalarFieldEnum = {
+    id: 'id',
+    cleaningTypeCode: 'cleaningTypeCode',
+    cleaningTypeName: 'cleaningTypeName',
+    cleaningTypeDetails: 'cleaningTypeDetails',
+    defaultMethod: 'defaultMethod',
+    displayOrder: 'displayOrder',
+    isActive: 'isActive',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.RoomCleaningSopStepScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    cleaningTypeId: 'cleaningTypeId',
+    stepNumber: 'stepNumber',
+    timeAllottedDisplay: 'timeAllottedDisplay',
+    cleaningMethod: 'cleaningMethod',
+    equipmentCleaningSequence: 'equipmentCleaningSequence',
+    procedureText: 'procedureText',
+    chemicalUsed: 'chemicalUsed',
+    status: 'status',
+    authorizedBy: 'authorizedBy',
+    authorizedAt: 'authorizedAt',
+    authorizationRemarks: 'authorizationRemarks',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.RoomInspection1SopStepScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    cleaningTypeId: 'cleaningTypeId',
+    stepNumber: 'stepNumber',
+    procedureText: 'procedureText',
+    status: 'status',
+    authorizedBy: 'authorizedBy',
+    authorizedAt: 'authorizedAt',
+    authorizationRemarks: 'authorizationRemarks',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.RoomInspection1SopStepMediaScalarFieldEnum = {
+    id: 'id',
+    sopStepId: 'sopStepId',
+    displayOrder: 'displayOrder',
+    fileUrl: 'fileUrl',
+    fileName: 'fileName',
+    fileType: 'fileType',
+    caption: 'caption',
+    uploadedBy: 'uploadedBy',
     createdAt: 'createdAt'
 };
 exports.SortOrder = {

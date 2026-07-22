@@ -1,0 +1,17 @@
+import { Router } from 'express';
+import { requireAccessToken } from '../middleware/verifyToken';
+import { requireRole }        from '../middleware/requireRole';
+import { listController, exportController, importController, getController, createController, updateController, deleteController } from '../controllers/equ-inspection2-sop-steps.controller';
+import { listMediaController, addMediaController, removeMediaController } from '../controllers/equ-inspection2-sop-step-media.controller';
+export const equInspection2SopStepsRouter = Router();
+const guard = [requireAccessToken, requireRole(['System Administrator', 'User Admin'])];
+equInspection2SopStepsRouter.get('/export', ...guard, exportController);
+equInspection2SopStepsRouter.post('/import', ...guard, importController);
+equInspection2SopStepsRouter.get('/',        ...guard, listController);
+equInspection2SopStepsRouter.post('/',       ...guard, createController);
+equInspection2SopStepsRouter.get('/:id',     ...guard, getController);
+equInspection2SopStepsRouter.patch('/:id',   ...guard, updateController);
+equInspection2SopStepsRouter.delete('/:id',  ...guard, deleteController);
+equInspection2SopStepsRouter.get('/:stepId/media',             ...guard, listMediaController);
+equInspection2SopStepsRouter.post('/:stepId/media',            ...guard, addMediaController);
+equInspection2SopStepsRouter.delete('/:stepId/media/:mediaId', ...guard, removeMediaController);

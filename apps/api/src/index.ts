@@ -18,7 +18,17 @@ import { cleaningEquipmentRouter } from './routes/cleaning-equipment.routes';
 import { packagingTypesRouter }    from './routes/packaging-types.routes';
 import { functionTypesRouter }     from './routes/function-types.routes';
 import { scalesRouter }            from './routes/scales.routes';
-import { weightsRouter }           from './routes/weights.routes';
+import { weightsRouter }                 from './routes/weights.routes';
+import { roomCleaningTypesRouter }       from './routes/room-cleaning-types.routes';
+import { roomCleaningSopStepsRouter }    from './routes/room-cleaning-sop-steps.routes';
+import { roomInspection1SopStepsRouter } from './routes/room-inspection1-sop-steps.routes';
+import { roomInspection2SopStepsRouter } from './routes/room-inspection2-sop-steps.routes';
+import { roomQacSopStepsRouter }         from './routes/room-qac-sop-steps.routes';
+import { equCleaningSopStepsRouter }     from './routes/equ-cleaning-sop-steps.routes';
+import { equInspection1SopStepsRouter } from './routes/equ-inspection1-sop-steps.routes';
+import { equInspection2SopStepsRouter } from './routes/equ-inspection2-sop-steps.routes';
+import { equQacSopStepsRouter }         from './routes/equ-qac-sop-steps.routes';
+import { uploadsRouter }                from './routes/uploads.routes';
 import { AuthError }               from './services/auth.service';
 import { UserError }               from './services/users.service';
 import { RoomTypeError }           from './services/room-types.service';
@@ -28,6 +38,15 @@ import { PackagingTypeError }      from './services/packaging-types.service';
 import { FunctionTypeError }       from './services/function-types.service';
 import { ScaleError }              from './services/scales.service';
 import { WeightError }             from './services/weights.service';
+import { RoomCleaningTypeError }   from './services/room-cleaning-types.service';
+import { RoomCleaningSopStepError } from './services/room-cleaning-sop-steps.service';
+import { RoomInspection1SopStepError } from './services/room-inspection1-sop-steps.service';
+import { RoomInspection2SopStepError } from './services/room-inspection2-sop-steps.service';
+import { RoomQacSopStepError }         from './services/room-qac-sop-steps.service';
+import { EquCleaningSopStepError }     from './services/equ-cleaning-sop-steps.service';
+import { EquInsp1SopStepError }        from './services/equ-inspection1-sop-steps.service';
+import { EquInsp2SopStepError }        from './services/equ-inspection2-sop-steps.service';
+import { EquQacSopStepError }          from './services/equ-qac-sop-steps.service';
 import { disconnectAll } from '../lib/prisma';
 
 // ── App ───────────────────────────────────────────────────────────────────────
@@ -61,8 +80,22 @@ app.use('/api/process-types',      processTypesRouter);
 app.use('/api/cleaning-equipment', cleaningEquipmentRouter);
 app.use('/api/packaging-types',   packagingTypesRouter);
 app.use('/api/function-types',    functionTypesRouter);
-app.use('/api/scales',            scalesRouter);
-app.use('/api/weights',           weightsRouter);
+app.use('/api/scales',                    scalesRouter);
+app.use('/api/weights',                   weightsRouter);
+app.use('/api/room-cleaning-types',       roomCleaningTypesRouter);
+app.use('/api/room-cleaning-sop-steps',    roomCleaningSopStepsRouter);
+app.use('/api/room-inspection1-sop-steps', roomInspection1SopStepsRouter);
+app.use('/api/room-inspection2-sop-steps', roomInspection2SopStepsRouter);
+app.use('/api/room-qac-sop-steps',         roomQacSopStepsRouter);
+app.use('/api/equ-cleaning-sop-steps',    equCleaningSopStepsRouter);
+app.use('/api/equ-inspection1-sop-steps', equInspection1SopStepsRouter);
+app.use('/api/equ-inspection2-sop-steps', equInspection2SopStepsRouter);
+app.use('/api/equ-qac-sop-steps',         equQacSopStepsRouter);
+
+// ── Uploads: static serving + file-upload endpoint ───────────────────────────
+// Static MUST come before the upload router so GET requests are served directly
+app.use('/api/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/api/uploads', uploadsRouter);
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
 
@@ -74,7 +107,7 @@ app.use((_req: Request, res: Response) => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  if (err instanceof AuthError || err instanceof UserError || err instanceof RoomTypeError || err instanceof ProcessTypeError || err instanceof CleaningEquipmentError || err instanceof PackagingTypeError || err instanceof FunctionTypeError || err instanceof ScaleError || err instanceof WeightError) {
+  if (err instanceof AuthError || err instanceof UserError || err instanceof RoomTypeError || err instanceof ProcessTypeError || err instanceof CleaningEquipmentError || err instanceof PackagingTypeError || err instanceof FunctionTypeError || err instanceof ScaleError || err instanceof WeightError || err instanceof RoomCleaningTypeError || err instanceof RoomCleaningSopStepError || err instanceof RoomInspection1SopStepError || err instanceof RoomInspection2SopStepError || err instanceof RoomQacSopStepError || err instanceof EquCleaningSopStepError || err instanceof EquInsp1SopStepError || err instanceof EquInsp2SopStepError || err instanceof EquQacSopStepError) {
     return res.status(err.statusCode).json({
       success: false,
       error:   err.code,

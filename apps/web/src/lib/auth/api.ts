@@ -1107,3 +1107,785 @@ export function apiImportWeights(
 ): Promise<ImportResult> {
   return apiPost<ImportResult>("/api/weights/import", { rows }, accessToken)
 }
+
+// ── Room Cleaning Types ───────────────────────────────────────────────────────
+
+export const ROOM_CLEANING_DEFAULT_METHODS = ['TypeA', 'TypeB', 'TypeC'] as const
+export type RoomCleaningDefaultMethod = typeof ROOM_CLEANING_DEFAULT_METHODS[number]
+
+export interface RoomCleaningTypeItem {
+  id:                  string
+  cleaningTypeCode:    string
+  cleaningTypeName:    string
+  cleaningTypeDetails: string | null
+  defaultMethod:       RoomCleaningDefaultMethod | null
+  displayOrder:        number
+  isActive:            boolean
+  createdAt:           string
+  updatedAt:           string
+}
+
+export interface CreateRoomCleaningTypePayload {
+  cleaningTypeName:    string
+  cleaningTypeDetails?: string
+  defaultMethod?:      RoomCleaningDefaultMethod
+  displayOrder?:       number
+  isActive?:           boolean
+}
+
+export interface UpdateRoomCleaningTypePayload {
+  cleaningTypeName?:    string
+  cleaningTypeDetails?: string | null
+  defaultMethod?:       RoomCleaningDefaultMethod | null
+  displayOrder?:        number
+  isActive?:            boolean
+}
+
+export interface RoomCleaningTypeImportRow {
+  cleaningTypeName:    string
+  cleaningTypeDetails?: string
+  defaultMethod?:      RoomCleaningDefaultMethod
+  displayOrder?:       number
+}
+
+export function apiListRoomCleaningTypes(
+  accessToken: string,
+  search?: string,
+): Promise<RoomCleaningTypeItem[]> {
+  const qs = search ? `?search=${encodeURIComponent(search)}` : ""
+  return apiGet<RoomCleaningTypeItem[]>(`/api/room-cleaning-types${qs}`, accessToken)
+}
+
+export function apiCreateRoomCleaningType(
+  accessToken: string,
+  payload:     CreateRoomCleaningTypePayload,
+): Promise<RoomCleaningTypeItem> {
+  return apiPost<RoomCleaningTypeItem>("/api/room-cleaning-types", payload, accessToken)
+}
+
+export function apiUpdateRoomCleaningType(
+  accessToken: string,
+  id:          string,
+  payload:     UpdateRoomCleaningTypePayload,
+): Promise<RoomCleaningTypeItem> {
+  return apiFetch<RoomCleaningTypeItem>(`/api/room-cleaning-types/${id}`, {
+    method: "PATCH",
+    body:   JSON.stringify(payload),
+    token:  accessToken,
+  })
+}
+
+export function apiDeleteRoomCleaningType(
+  accessToken: string,
+  id:          string,
+): Promise<null> {
+  return apiFetch<null>(`/api/room-cleaning-types/${id}`, {
+    method: "DELETE",
+    token:  accessToken,
+  })
+}
+
+export async function apiExportRoomCleaningTypes(accessToken: string): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/api/room-cleaning-types/export`, {
+    method: "GET", credentials: "include",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) {
+    let code = "UNKNOWN", message = "Export failed"
+    try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ }
+    throw new ApiError(code, message, res.status)
+  }
+  return res.blob()
+}
+
+export function apiImportRoomCleaningTypes(
+  accessToken: string,
+  rows:        RoomCleaningTypeImportRow[],
+): Promise<ImportResult> {
+  return apiPost<ImportResult>("/api/room-cleaning-types/import", { rows }, accessToken)
+}
+
+// ── Room Cleaning SOP Steps ───────────────────────────────────────────────────
+
+export const SOP_CLEANING_METHODS  = ['TypeA', 'TypeB', 'TypeC'] as const
+export const SOP_EQUIP_SEQUENCES   = ['Before', 'After', 'NA']   as const
+export const SOP_STATUSES          = ['pending', 'approved', 'rejected', 'archived'] as const
+
+export type SopCleaningMethod  = typeof SOP_CLEANING_METHODS[number]
+export type SopEquipSequence   = typeof SOP_EQUIP_SEQUENCES[number]
+export type SopStatus          = typeof SOP_STATUSES[number]
+
+export interface RoomCleaningSopStepItem {
+  id:                        string
+  slid:                      number
+  cleaningTypeId:            string
+  cleaningTypeName:          string
+  cleaningTypeCode:          string
+  stepNumber:                number
+  timeAllottedDisplay:       string | null
+  cleaningMethod:            SopCleaningMethod
+  equipmentCleaningSequence: SopEquipSequence
+  procedureText:             string
+  chemicalUsed:              string | null
+  status:                    SopStatus
+  createdAt:                 string
+  updatedAt:                 string
+}
+
+export interface CreateRoomCleaningSopStepPayload {
+  cleaningTypeId:            string
+  stepNumber:                number
+  timeAllottedDisplay?:      string
+  cleaningMethod:            SopCleaningMethod
+  equipmentCleaningSequence?: SopEquipSequence
+  procedureText:             string
+  chemicalUsed?:             string
+  status?:                   SopStatus
+}
+
+export interface UpdateRoomCleaningSopStepPayload {
+  stepNumber?:               number
+  timeAllottedDisplay?:      string | null
+  cleaningMethod?:           SopCleaningMethod
+  equipmentCleaningSequence?: SopEquipSequence
+  procedureText?:            string
+  chemicalUsed?:             string | null
+  status?:                   SopStatus
+}
+
+export interface SopStepImportRow {
+  cleaningTypeCode:          string
+  stepNumber:                number
+  timeAllottedDisplay?:      string
+  cleaningMethod:            SopCleaningMethod
+  equipmentCleaningSequence?: SopEquipSequence
+  procedureText:             string
+  chemicalUsed?:             string
+}
+
+export function apiListRoomCleaningSopSteps(
+  accessToken:    string,
+  cleaningTypeId?: string,
+  status?:        string,
+): Promise<RoomCleaningSopStepItem[]> {
+  const params = new URLSearchParams()
+  if (cleaningTypeId) params.set("cleaningTypeId", cleaningTypeId)
+  if (status)         params.set("status",         status)
+  const qs = params.toString() ? `?${params.toString()}` : ""
+  return apiGet<RoomCleaningSopStepItem[]>(`/api/room-cleaning-sop-steps${qs}`, accessToken)
+}
+
+export function apiCreateRoomCleaningSopStep(
+  accessToken: string,
+  payload:     CreateRoomCleaningSopStepPayload,
+): Promise<RoomCleaningSopStepItem> {
+  return apiPost<RoomCleaningSopStepItem>("/api/room-cleaning-sop-steps", payload, accessToken)
+}
+
+export function apiUpdateRoomCleaningSopStep(
+  accessToken: string,
+  id:          string,
+  payload:     UpdateRoomCleaningSopStepPayload,
+): Promise<RoomCleaningSopStepItem> {
+  return apiFetch<RoomCleaningSopStepItem>(`/api/room-cleaning-sop-steps/${id}`, {
+    method: "PATCH",
+    body:   JSON.stringify(payload),
+    token:  accessToken,
+  })
+}
+
+export function apiDeleteRoomCleaningSopStep(
+  accessToken: string,
+  id:          string,
+): Promise<null> {
+  return apiFetch<null>(`/api/room-cleaning-sop-steps/${id}`, {
+    method: "DELETE",
+    token:  accessToken,
+  })
+}
+
+export async function apiExportRoomCleaningSopSteps(
+  accessToken:    string,
+  cleaningTypeId?: string,
+): Promise<Blob> {
+  const qs = cleaningTypeId ? `?cleaningTypeId=${encodeURIComponent(cleaningTypeId)}` : ""
+  const res = await fetch(`${API_BASE}/api/room-cleaning-sop-steps/export${qs}`, {
+    method: "GET", credentials: "include",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) {
+    let code = "UNKNOWN", message = "Export failed"
+    try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ }
+    throw new ApiError(code, message, res.status)
+  }
+  return res.blob()
+}
+
+export function apiImportRoomCleaningSopSteps(
+  accessToken: string,
+  rows:        SopStepImportRow[],
+): Promise<ImportResult> {
+  return apiPost<ImportResult>("/api/room-cleaning-sop-steps/import", { rows }, accessToken)
+}
+
+// ── Room Inspection1 SOP Steps ────────────────────────────────────────────────
+
+export const INSP1_STATUSES = ['pending', 'approved', 'rejected', 'archived'] as const
+export type  Insp1Status    = typeof INSP1_STATUSES[number]
+
+export interface Insp1MediaItem {
+  id:           string
+  sopStepId:    string
+  displayOrder: number
+  fileUrl:      string
+  fileName:     string | null
+  fileType:     string | null
+  caption:      string | null
+  createdAt:    string
+}
+
+export interface RoomInspection1SopStepItem {
+  id:               string
+  slid:             number
+  cleaningTypeId:   string
+  cleaningTypeName: string
+  cleaningTypeCode: string
+  stepNumber:       number
+  procedureText:    string
+  status:           Insp1Status
+  media:            Insp1MediaItem[]
+  createdAt:        string
+  updatedAt:        string
+}
+
+export interface CreateRoomInspection1SopStepPayload {
+  cleaningTypeId: string
+  stepNumber:     number
+  procedureText:  string
+  status?:        Insp1Status
+}
+
+export interface UpdateRoomInspection1SopStepPayload {
+  stepNumber?:    number
+  procedureText?: string
+  status?:        Insp1Status
+}
+
+export interface Insp1ImportRow {
+  cleaningTypeCode: string
+  stepNumber:       number
+  procedureText:    string
+}
+
+export function apiListRoomInspection1SopSteps(
+  accessToken:     string,
+  cleaningTypeId?: string,
+  status?:         string,
+): Promise<RoomInspection1SopStepItem[]> {
+  const params = new URLSearchParams()
+  if (cleaningTypeId) params.set("cleaningTypeId", cleaningTypeId)
+  if (status)         params.set("status",         status)
+  const qs = params.toString() ? `?${params.toString()}` : ""
+  return apiGet<RoomInspection1SopStepItem[]>(`/api/room-inspection1-sop-steps${qs}`, accessToken)
+}
+
+export function apiCreateRoomInspection1SopStep(
+  accessToken: string,
+  payload:     CreateRoomInspection1SopStepPayload,
+): Promise<RoomInspection1SopStepItem> {
+  return apiPost<RoomInspection1SopStepItem>("/api/room-inspection1-sop-steps", payload, accessToken)
+}
+
+export function apiUpdateRoomInspection1SopStep(
+  accessToken: string,
+  id:          string,
+  payload:     UpdateRoomInspection1SopStepPayload,
+): Promise<RoomInspection1SopStepItem> {
+  return apiFetch<RoomInspection1SopStepItem>(`/api/room-inspection1-sop-steps/${id}`, {
+    method: "PATCH",
+    body:   JSON.stringify(payload),
+    token:  accessToken,
+  })
+}
+
+export function apiDeleteRoomInspection1SopStep(
+  accessToken: string,
+  id:          string,
+): Promise<null> {
+  return apiFetch<null>(`/api/room-inspection1-sop-steps/${id}`, {
+    method: "DELETE",
+    token:  accessToken,
+  })
+}
+
+export async function apiExportRoomInspection1SopSteps(
+  accessToken:     string,
+  cleaningTypeId?: string,
+): Promise<Blob> {
+  const qs = cleaningTypeId ? `?cleaningTypeId=${encodeURIComponent(cleaningTypeId)}` : ""
+  const res = await fetch(`${API_BASE}/api/room-inspection1-sop-steps/export${qs}`, {
+    method: "GET", credentials: "include",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) {
+    let code = "UNKNOWN", message = "Export failed"
+    try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ }
+    throw new ApiError(code, message, res.status)
+  }
+  return res.blob()
+}
+
+export function apiImportRoomInspection1SopSteps(
+  accessToken: string,
+  rows:        Insp1ImportRow[],
+): Promise<ImportResult> {
+  return apiPost<ImportResult>("/api/room-inspection1-sop-steps/import", { rows }, accessToken)
+}
+
+// ── Inspection1 Media ─────────────────────────────────────────────────────────
+
+export interface AddInsp1MediaPayload {
+  fileUrl:   string
+  fileName?: string
+  fileType?: string
+  caption?:  string
+}
+
+export function apiAddInspection1Media(
+  accessToken: string,
+  stepId:      string,
+  payload:     AddInsp1MediaPayload,
+): Promise<Insp1MediaItem> {
+  return apiPost<Insp1MediaItem>(
+    `/api/room-inspection1-sop-steps/${stepId}/media`, payload, accessToken,
+  )
+}
+
+export function apiDeleteInspection1Media(
+  accessToken: string,
+  stepId:      string,
+  mediaId:     string,
+): Promise<null> {
+  return apiFetch<null>(
+    `/api/room-inspection1-sop-steps/${stepId}/media/${mediaId}`,
+    { method: "DELETE", token: accessToken },
+  )
+}
+
+/**
+ * Upload an image file for an inspection-1 SOP step.
+ * Sends raw binary (application/octet-stream) — no multer required on the API.
+ */
+export async function apiUploadInspection1MediaFile(
+  accessToken: string,
+  file: File,
+): Promise<{ url: string; fileName: string; fileType: string }> {
+  const params = new URLSearchParams({ fileName: file.name, fileType: file.type })
+  const res = await fetch(`${API_BASE}/api/uploads/inspection1-media?${params}`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/octet-stream",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: file,
+  })
+  if (res.status === 401 && _onUnauthorized) _onUnauthorized()
+  if (!res.ok) {
+    let code = "UNKNOWN", message = "Upload failed"
+    try {
+      const b = await res.json()
+      code    = b.error   ?? code
+      message = b.message ?? message
+    } catch { /* ignore */ }
+    throw new ApiError(code, message, res.status)
+  }
+  const json = await res.json()
+  return json.data as { url: string; fileName: string; fileType: string }
+}
+
+// ── Re-usable upload helper (shared endpoint, same uploads dir) ───────────────
+async function apiUploadMediaFile(
+  accessToken: string,
+  file: File,
+): Promise<{ url: string; fileName: string; fileType: string }> {
+  return apiUploadInspection1MediaFile(accessToken, file)
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// INSPECTION 2
+// ════════════════════════════════════════════════════════════════════════════════
+
+export const INSP2_STATUSES = ['pending', 'approved', 'rejected', 'archived'] as const
+
+export interface Insp2MediaItem {
+  id: string; sopStepId: string; displayOrder: number
+  fileUrl: string; fileName: string | null; fileType: string | null
+  caption: string | null; createdAt: string
+}
+
+export interface RoomInspection2SopStepItem {
+  id: string; slid: number; cleaningTypeId: string
+  cleaningTypeName: string; cleaningTypeCode: string
+  stepNumber: number; procedureText: string; status: string
+  media: Insp2MediaItem[]; createdAt: string; updatedAt: string
+}
+
+export interface AddInsp2MediaPayload {
+  fileUrl: string; fileName?: string; fileType?: string; caption?: string
+}
+
+export function apiListRoomInspection2SopSteps(
+  accessToken: string, cleaningTypeId?: string, status?: string,
+): Promise<RoomInspection2SopStepItem[]> {
+  const p = new URLSearchParams()
+  if (cleaningTypeId) p.set("cleaningTypeId", cleaningTypeId)
+  if (status)         p.set("status", status)
+  const qs = p.toString()
+  return apiFetch<RoomInspection2SopStepItem[]>(
+    `/api/room-inspection2-sop-steps${qs ? "?" + qs : ""}`, { token: accessToken },
+  )
+}
+
+export function apiCreateRoomInspection2SopStep(
+  accessToken: string,
+  payload: { cleaningTypeId: string; stepNumber: number; procedureText: string },
+): Promise<RoomInspection2SopStepItem> {
+  return apiPost<RoomInspection2SopStepItem>("/api/room-inspection2-sop-steps", payload, accessToken)
+}
+
+export function apiUpdateRoomInspection2SopStep(
+  accessToken: string, id: string,
+  payload: { stepNumber?: number; procedureText?: string; status?: string },
+): Promise<RoomInspection2SopStepItem> {
+  return apiFetch<RoomInspection2SopStepItem>(
+    `/api/room-inspection2-sop-steps/${id}`,
+    { method: "PATCH", body: JSON.stringify(payload), token: accessToken },
+  )
+}
+
+export function apiDeleteRoomInspection2SopStep(accessToken: string, id: string): Promise<null> {
+  return apiFetch<null>(`/api/room-inspection2-sop-steps/${id}`, { method: "DELETE", token: accessToken })
+}
+
+export async function apiExportRoomInspection2SopSteps(
+  accessToken: string, cleaningTypeId?: string,
+): Promise<Blob> {
+  const qs = cleaningTypeId ? `?cleaningTypeId=${encodeURIComponent(cleaningTypeId)}` : ""
+  const res = await fetch(`${API_BASE}/api/room-inspection2-sop-steps/export${qs}`, {
+    method: "GET", credentials: "include",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) {
+    let code = "UNKNOWN", message = "Export failed"
+    try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ }
+    throw new ApiError(code, message, res.status)
+  }
+  return res.blob()
+}
+
+export async function apiImportRoomInspection2SopSteps(
+  accessToken: string,
+  rows: { cleaningTypeCode: string; stepNumber: number; procedureText: string }[],
+): Promise<{ created: number; skipped: number; errors: { row: number; message: string }[] }> {
+  return apiPost("/api/room-inspection2-sop-steps/import", { rows }, accessToken)
+}
+
+export function apiAddInspection2Media(
+  accessToken: string, stepId: string, payload: AddInsp2MediaPayload,
+): Promise<Insp2MediaItem> {
+  return apiPost<Insp2MediaItem>(`/api/room-inspection2-sop-steps/${stepId}/media`, payload, accessToken)
+}
+
+export function apiDeleteInspection2Media(
+  accessToken: string, stepId: string, mediaId: string,
+): Promise<null> {
+  return apiFetch<null>(
+    `/api/room-inspection2-sop-steps/${stepId}/media/${mediaId}`, { method: "DELETE", token: accessToken },
+  )
+}
+
+export async function apiUploadInspection2MediaFile(
+  accessToken: string, file: File,
+): Promise<{ url: string; fileName: string; fileType: string }> {
+  return apiUploadMediaFile(accessToken, file)
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// ROOM QAC
+// ════════════════════════════════════════════════════════════════════════════════
+
+export const QAC_STATUSES = ['pending', 'approved', 'rejected', 'archived'] as const
+
+export interface QacMediaItem {
+  id: string; sopStepId: string; displayOrder: number
+  fileUrl: string; fileName: string | null; fileType: string | null
+  caption: string | null; createdAt: string
+}
+
+export interface RoomQacSopStepItem {
+  id: string; slid: number; cleaningTypeId: string
+  cleaningTypeName: string; cleaningTypeCode: string
+  stepNumber: number; procedureText: string; status: string
+  media: QacMediaItem[]; createdAt: string; updatedAt: string
+}
+
+export interface AddQacMediaPayload {
+  fileUrl: string; fileName?: string; fileType?: string; caption?: string
+}
+
+export function apiListRoomQacSopSteps(
+  accessToken: string, cleaningTypeId?: string, status?: string,
+): Promise<RoomQacSopStepItem[]> {
+  const p = new URLSearchParams()
+  if (cleaningTypeId) p.set("cleaningTypeId", cleaningTypeId)
+  if (status)         p.set("status", status)
+  const qs = p.toString()
+  return apiFetch<RoomQacSopStepItem[]>(
+    `/api/room-qac-sop-steps${qs ? "?" + qs : ""}`, { token: accessToken },
+  )
+}
+
+export function apiCreateRoomQacSopStep(
+  accessToken: string,
+  payload: { cleaningTypeId: string; stepNumber: number; procedureText: string },
+): Promise<RoomQacSopStepItem> {
+  return apiPost<RoomQacSopStepItem>("/api/room-qac-sop-steps", payload, accessToken)
+}
+
+export function apiUpdateRoomQacSopStep(
+  accessToken: string, id: string,
+  payload: { stepNumber?: number; procedureText?: string; status?: string },
+): Promise<RoomQacSopStepItem> {
+  return apiFetch<RoomQacSopStepItem>(
+    `/api/room-qac-sop-steps/${id}`,
+    { method: "PATCH", body: JSON.stringify(payload), token: accessToken },
+  )
+}
+
+export function apiDeleteRoomQacSopStep(accessToken: string, id: string): Promise<null> {
+  return apiFetch<null>(`/api/room-qac-sop-steps/${id}`, { method: "DELETE", token: accessToken })
+}
+
+export async function apiExportRoomQacSopSteps(
+  accessToken: string, cleaningTypeId?: string,
+): Promise<Blob> {
+  const qs = cleaningTypeId ? `?cleaningTypeId=${encodeURIComponent(cleaningTypeId)}` : ""
+  const res = await fetch(`${API_BASE}/api/room-qac-sop-steps/export${qs}`, {
+    method: "GET", credentials: "include",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) {
+    let code = "UNKNOWN", message = "Export failed"
+    try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ }
+    throw new ApiError(code, message, res.status)
+  }
+  return res.blob()
+}
+
+export async function apiImportRoomQacSopSteps(
+  accessToken: string,
+  rows: { cleaningTypeCode: string; stepNumber: number; procedureText: string }[],
+): Promise<{ created: number; skipped: number; errors: { row: number; message: string }[] }> {
+  return apiPost("/api/room-qac-sop-steps/import", { rows }, accessToken)
+}
+
+export function apiAddQacMedia(
+  accessToken: string, stepId: string, payload: AddQacMediaPayload,
+): Promise<QacMediaItem> {
+  return apiPost<QacMediaItem>(`/api/room-qac-sop-steps/${stepId}/media`, payload, accessToken)
+}
+
+export function apiDeleteQacMedia(
+  accessToken: string, stepId: string, mediaId: string,
+): Promise<null> {
+  return apiFetch<null>(
+    `/api/room-qac-sop-steps/${stepId}/media/${mediaId}`, { method: "DELETE", token: accessToken },
+  )
+}
+
+export async function apiUploadQacMediaFile(
+  accessToken: string, file: File,
+): Promise<{ url: string; fileName: string; fileType: string }> {
+  return apiUploadMediaFile(accessToken, file)
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// EQUIPMENT CLEANING SOP
+// ════════════════════════════════════════════════════════════════════════════════
+
+export const EQU_CLEANING_METHODS = ['TypeA', 'TypeB', 'TypeC'] as const
+export const EQU_SOP_STATUSES     = ['pending', 'approved', 'rejected', 'archived'] as const
+
+export type EquCleaningMethod = typeof EQU_CLEANING_METHODS[number]
+export type EquSopStatus      = typeof EQU_SOP_STATUSES[number]
+
+export interface EquSopMediaItem {
+  id: string; sopStepId: string; displayOrder: number
+  fileUrl: string; fileName: string | null; fileType: string | null
+  caption: string | null; createdAt: string
+}
+
+export interface EquCleaningSopStepItem {
+  id: string; slid: number; cleaningTypeId: string
+  cleaningTypeName: string; cleaningTypeCode: string
+  stepNumber: number; timeAllottedDisplay: string | null
+  cleaningMethod: EquCleaningMethod
+  procedureText: string
+  chemicalUsed: string | null
+  equipmentUsed: string | null
+  status: EquSopStatus
+  media: EquSopMediaItem[]
+  createdAt: string; updatedAt: string
+}
+
+export interface CreateEquCleaningSopStepPayload {
+  cleaningTypeId: string; stepNumber: number
+  timeAllottedDisplay?: string; cleaningMethod: EquCleaningMethod
+  procedureText: string; chemicalUsed?: string
+  equipmentUsed?: string; status?: EquSopStatus
+}
+
+export interface UpdateEquCleaningSopStepPayload {
+  stepNumber?: number; timeAllottedDisplay?: string | null
+  cleaningMethod?: EquCleaningMethod; procedureText?: string
+  chemicalUsed?: string | null; equipmentUsed?: string | null
+  status?: EquSopStatus
+}
+
+export interface EquSopImportRow {
+  cleaningTypeCode: string; stepNumber: number
+  timeAllottedDisplay?: string; cleaningMethod: EquCleaningMethod
+  procedureText: string; chemicalUsed?: string; equipmentUsed?: string
+}
+
+export interface AddEquSopMediaPayload {
+  fileUrl: string; fileName?: string; fileType?: string; caption?: string
+}
+
+export function apiListEquCleaningSopSteps(
+  accessToken: string, cleaningTypeId?: string, status?: string,
+): Promise<EquCleaningSopStepItem[]> {
+  const p = new URLSearchParams()
+  if (cleaningTypeId) p.set("cleaningTypeId", cleaningTypeId)
+  if (status)         p.set("status", status)
+  const qs = p.toString()
+  return apiFetch<EquCleaningSopStepItem[]>(
+    `/api/equ-cleaning-sop-steps${qs ? "?" + qs : ""}`, { token: accessToken },
+  )
+}
+
+export function apiCreateEquCleaningSopStep(
+  accessToken: string, payload: CreateEquCleaningSopStepPayload,
+): Promise<EquCleaningSopStepItem> {
+  return apiPost<EquCleaningSopStepItem>("/api/equ-cleaning-sop-steps", payload, accessToken)
+}
+
+export function apiUpdateEquCleaningSopStep(
+  accessToken: string, id: string, payload: UpdateEquCleaningSopStepPayload,
+): Promise<EquCleaningSopStepItem> {
+  return apiFetch<EquCleaningSopStepItem>(`/api/equ-cleaning-sop-steps/${id}`, {
+    method: "PATCH", body: JSON.stringify(payload), token: accessToken,
+  })
+}
+
+export function apiDeleteEquCleaningSopStep(accessToken: string, id: string): Promise<null> {
+  return apiFetch<null>(`/api/equ-cleaning-sop-steps/${id}`, { method: "DELETE", token: accessToken })
+}
+
+export async function apiExportEquCleaningSopSteps(
+  accessToken: string, cleaningTypeId?: string,
+): Promise<Blob> {
+  const qs = cleaningTypeId ? `?cleaningTypeId=${encodeURIComponent(cleaningTypeId)}` : ""
+  const res = await fetch(`${API_BASE}/api/equ-cleaning-sop-steps/export${qs}`, {
+    method: "GET", credentials: "include",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) {
+    let code = "UNKNOWN", message = "Export failed"
+    try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ }
+    throw new ApiError(code, message, res.status)
+  }
+  return res.blob()
+}
+
+export function apiImportEquCleaningSopSteps(
+  accessToken: string, rows: EquSopImportRow[],
+): Promise<{ created: number; skipped: number; errors: { row: number; message: string }[] }> {
+  return apiPost("/api/equ-cleaning-sop-steps/import", { rows }, accessToken)
+}
+
+export function apiAddEquSopMedia(
+  accessToken: string, stepId: string, payload: AddEquSopMediaPayload,
+): Promise<EquSopMediaItem> {
+  return apiPost<EquSopMediaItem>(`/api/equ-cleaning-sop-steps/${stepId}/media`, payload, accessToken)
+}
+
+export function apiDeleteEquSopMedia(
+  accessToken: string, stepId: string, mediaId: string,
+): Promise<null> {
+  return apiFetch<null>(`/api/equ-cleaning-sop-steps/${stepId}/media/${mediaId}`, { method: "DELETE", token: accessToken })
+}
+
+export async function apiUploadEquSopMediaFile(
+  accessToken: string, file: File,
+): Promise<{ url: string; fileName: string; fileType: string }> {
+  return apiUploadMediaFile(accessToken, file)
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// EQUIPMENT INSPECTION 1
+// ════════════════════════════════════════════════════════════════════════════════
+
+export const EQU_INSP1_STATUSES = ['pending', 'approved', 'rejected', 'archived'] as const
+export interface EquInsp1MediaItem { id: string; sopStepId: string; displayOrder: number; fileUrl: string; fileName: string | null; fileType: string | null; caption: string | null; createdAt: string }
+export interface EquInsp1SopStepItem { id: string; slid: number; cleaningTypeId: string; cleaningTypeName: string; cleaningTypeCode: string; stepNumber: number; procedureText: string; status: string; media: EquInsp1MediaItem[]; createdAt: string; updatedAt: string }
+export interface AddEquInsp1MediaPayload { fileUrl: string; fileName?: string; fileType?: string; caption?: string }
+
+export function apiListEquInsp1SopSteps(accessToken: string, cleaningTypeId?: string, status?: string): Promise<EquInsp1SopStepItem[]> { const p = new URLSearchParams(); if (cleaningTypeId) p.set("cleaningTypeId", cleaningTypeId); if (status) p.set("status", status); const qs = p.toString(); return apiFetch<EquInsp1SopStepItem[]>(`/api/equ-inspection1-sop-steps${qs ? "?" + qs : ""}`, { token: accessToken }) }
+export function apiCreateEquInsp1SopStep(accessToken: string, payload: { cleaningTypeId: string; stepNumber: number; procedureText: string }): Promise<EquInsp1SopStepItem> { return apiPost<EquInsp1SopStepItem>("/api/equ-inspection1-sop-steps", payload, accessToken) }
+export function apiUpdateEquInsp1SopStep(accessToken: string, id: string, payload: { stepNumber?: number; procedureText?: string; status?: string }): Promise<EquInsp1SopStepItem> { return apiFetch<EquInsp1SopStepItem>(`/api/equ-inspection1-sop-steps/${id}`, { method: "PATCH", body: JSON.stringify(payload), token: accessToken }) }
+export function apiDeleteEquInsp1SopStep(accessToken: string, id: string): Promise<null> { return apiFetch<null>(`/api/equ-inspection1-sop-steps/${id}`, { method: "DELETE", token: accessToken }) }
+export async function apiExportEquInsp1SopSteps(accessToken: string, cleaningTypeId?: string): Promise<Blob> { const qs = cleaningTypeId ? `?cleaningTypeId=${encodeURIComponent(cleaningTypeId)}` : ""; const res = await fetch(`${API_BASE}/api/equ-inspection1-sop-steps/export${qs}`, { method: "GET", credentials: "include", headers: { Authorization: `Bearer ${accessToken}` } }); if (!res.ok) { let code = "UNKNOWN", message = "Export failed"; try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ } throw new ApiError(code, message, res.status) } return res.blob() }
+export function apiImportEquInsp1SopSteps(accessToken: string, rows: { cleaningTypeCode: string; stepNumber: number; procedureText: string }[]): Promise<{ created: number; skipped: number; errors: { row: number; message: string }[] }> { return apiPost("/api/equ-inspection1-sop-steps/import", { rows }, accessToken) }
+export function apiAddEquInsp1Media(accessToken: string, stepId: string, payload: AddEquInsp1MediaPayload): Promise<EquInsp1MediaItem> { return apiPost<EquInsp1MediaItem>(`/api/equ-inspection1-sop-steps/${stepId}/media`, payload, accessToken) }
+export function apiDeleteEquInsp1Media(accessToken: string, stepId: string, mediaId: string): Promise<null> { return apiFetch<null>(`/api/equ-inspection1-sop-steps/${stepId}/media/${mediaId}`, { method: "DELETE", token: accessToken }) }
+export async function apiUploadEquInsp1MediaFile(accessToken: string, file: File): Promise<{ url: string; fileName: string; fileType: string }> { return apiUploadMediaFile(accessToken, file) }
+
+// ════════════════════════════════════════════════════════════════════════════════
+// EQUIPMENT INSPECTION 2
+// ════════════════════════════════════════════════════════════════════════════════
+
+export const EQU_INSP2_STATUSES = ['pending', 'approved', 'rejected', 'archived'] as const
+export interface EquInsp2MediaItem { id: string; sopStepId: string; displayOrder: number; fileUrl: string; fileName: string | null; fileType: string | null; caption: string | null; createdAt: string }
+export interface EquInsp2SopStepItem { id: string; slid: number; cleaningTypeId: string; cleaningTypeName: string; cleaningTypeCode: string; stepNumber: number; procedureText: string; status: string; media: EquInsp2MediaItem[]; createdAt: string; updatedAt: string }
+export interface AddEquInsp2MediaPayload { fileUrl: string; fileName?: string; fileType?: string; caption?: string }
+
+export function apiListEquInsp2SopSteps(accessToken: string, cleaningTypeId?: string, status?: string): Promise<EquInsp2SopStepItem[]> { const p = new URLSearchParams(); if (cleaningTypeId) p.set("cleaningTypeId", cleaningTypeId); if (status) p.set("status", status); const qs = p.toString(); return apiFetch<EquInsp2SopStepItem[]>(`/api/equ-inspection2-sop-steps${qs ? "?" + qs : ""}`, { token: accessToken }) }
+export function apiCreateEquInsp2SopStep(accessToken: string, payload: { cleaningTypeId: string; stepNumber: number; procedureText: string }): Promise<EquInsp2SopStepItem> { return apiPost<EquInsp2SopStepItem>("/api/equ-inspection2-sop-steps", payload, accessToken) }
+export function apiUpdateEquInsp2SopStep(accessToken: string, id: string, payload: { stepNumber?: number; procedureText?: string; status?: string }): Promise<EquInsp2SopStepItem> { return apiFetch<EquInsp2SopStepItem>(`/api/equ-inspection2-sop-steps/${id}`, { method: "PATCH", body: JSON.stringify(payload), token: accessToken }) }
+export function apiDeleteEquInsp2SopStep(accessToken: string, id: string): Promise<null> { return apiFetch<null>(`/api/equ-inspection2-sop-steps/${id}`, { method: "DELETE", token: accessToken }) }
+export async function apiExportEquInsp2SopSteps(accessToken: string, cleaningTypeId?: string): Promise<Blob> { const qs = cleaningTypeId ? `?cleaningTypeId=${encodeURIComponent(cleaningTypeId)}` : ""; const res = await fetch(`${API_BASE}/api/equ-inspection2-sop-steps/export${qs}`, { method: "GET", credentials: "include", headers: { Authorization: `Bearer ${accessToken}` } }); if (!res.ok) { let code = "UNKNOWN", message = "Export failed"; try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ } throw new ApiError(code, message, res.status) } return res.blob() }
+export function apiImportEquInsp2SopSteps(accessToken: string, rows: { cleaningTypeCode: string; stepNumber: number; procedureText: string }[]): Promise<{ created: number; skipped: number; errors: { row: number; message: string }[] }> { return apiPost("/api/equ-inspection2-sop-steps/import", { rows }, accessToken) }
+export function apiAddEquInsp2Media(accessToken: string, stepId: string, payload: AddEquInsp2MediaPayload): Promise<EquInsp2MediaItem> { return apiPost<EquInsp2MediaItem>(`/api/equ-inspection2-sop-steps/${stepId}/media`, payload, accessToken) }
+export function apiDeleteEquInsp2Media(accessToken: string, stepId: string, mediaId: string): Promise<null> { return apiFetch<null>(`/api/equ-inspection2-sop-steps/${stepId}/media/${mediaId}`, { method: "DELETE", token: accessToken }) }
+export async function apiUploadEquInsp2MediaFile(accessToken: string, file: File): Promise<{ url: string; fileName: string; fileType: string }> { return apiUploadMediaFile(accessToken, file) }
+
+// ════════════════════════════════════════════════════════════════════════════════
+// EQUIPMENT QAC
+// ════════════════════════════════════════════════════════════════════════════════
+
+export const EQU_QAC_STATUSES = ['pending', 'approved', 'rejected', 'archived'] as const
+export interface EquQacMediaItem { id: string; sopStepId: string; displayOrder: number; fileUrl: string; fileName: string | null; fileType: string | null; caption: string | null; createdAt: string }
+export interface EquQacSopStepItem { id: string; slid: number; cleaningTypeId: string; cleaningTypeName: string; cleaningTypeCode: string; stepNumber: number; procedureText: string; status: string; media: EquQacMediaItem[]; createdAt: string; updatedAt: string }
+export interface AddEquQacMediaPayload { fileUrl: string; fileName?: string; fileType?: string; caption?: string }
+
+export function apiListEquQacSopSteps(accessToken: string, cleaningTypeId?: string, status?: string): Promise<EquQacSopStepItem[]> { const p = new URLSearchParams(); if (cleaningTypeId) p.set("cleaningTypeId", cleaningTypeId); if (status) p.set("status", status); const qs = p.toString(); return apiFetch<EquQacSopStepItem[]>(`/api/equ-qac-sop-steps${qs ? "?" + qs : ""}`, { token: accessToken }) }
+export function apiCreateEquQacSopStep(accessToken: string, payload: { cleaningTypeId: string; stepNumber: number; procedureText: string }): Promise<EquQacSopStepItem> { return apiPost<EquQacSopStepItem>("/api/equ-qac-sop-steps", payload, accessToken) }
+export function apiUpdateEquQacSopStep(accessToken: string, id: string, payload: { stepNumber?: number; procedureText?: string; status?: string }): Promise<EquQacSopStepItem> { return apiFetch<EquQacSopStepItem>(`/api/equ-qac-sop-steps/${id}`, { method: "PATCH", body: JSON.stringify(payload), token: accessToken }) }
+export function apiDeleteEquQacSopStep(accessToken: string, id: string): Promise<null> { return apiFetch<null>(`/api/equ-qac-sop-steps/${id}`, { method: "DELETE", token: accessToken }) }
+export async function apiExportEquQacSopSteps(accessToken: string, cleaningTypeId?: string): Promise<Blob> { const qs = cleaningTypeId ? `?cleaningTypeId=${encodeURIComponent(cleaningTypeId)}` : ""; const res = await fetch(`${API_BASE}/api/equ-qac-sop-steps/export${qs}`, { method: "GET", credentials: "include", headers: { Authorization: `Bearer ${accessToken}` } }); if (!res.ok) { let code = "UNKNOWN", message = "Export failed"; try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ } throw new ApiError(code, message, res.status) } return res.blob() }
+export function apiImportEquQacSopSteps(accessToken: string, rows: { cleaningTypeCode: string; stepNumber: number; procedureText: string }[]): Promise<{ created: number; skipped: number; errors: { row: number; message: string }[] }> { return apiPost("/api/equ-qac-sop-steps/import", { rows }, accessToken) }
+export function apiAddEquQacMedia(accessToken: string, stepId: string, payload: AddEquQacMediaPayload): Promise<EquQacMediaItem> { return apiPost<EquQacMediaItem>(`/api/equ-qac-sop-steps/${stepId}/media`, payload, accessToken) }
+export function apiDeleteEquQacMedia(accessToken: string, stepId: string, mediaId: string): Promise<null> { return apiFetch<null>(`/api/equ-qac-sop-steps/${stepId}/media/${mediaId}`, { method: "DELETE", token: accessToken }) }
+export async function apiUploadEquQacMediaFile(accessToken: string, file: File): Promise<{ url: string; fileName: string; fileType: string }> { return apiUploadMediaFile(accessToken, file) }

@@ -96,6 +96,37 @@ model User {
   updatedPackagingTypes   PackagingType[]      @relation("PackagingTypeUpdatedBy")
   createdFunctionTypes    FunctionType[]       @relation("FunctionTypeCreatedBy")
   updatedFunctionTypes    FunctionType[]       @relation("FunctionTypeUpdatedBy")
+  createdRoomCleaningTypes    RoomCleaningType[]   @relation("RoomCleaningTypeCreatedBy")
+  updatedRoomCleaningTypes    RoomCleaningType[]   @relation("RoomCleaningTypeUpdatedBy")
+  createdRoomCleaningSopSteps RoomCleaningSopStep[] @relation("RoomCleaningSopStepCreatedBy")
+  updatedRoomCleaningSopSteps RoomCleaningSopStep[] @relation("RoomCleaningSopStepUpdatedBy")
+  authorizedRoomCleaningSopSteps RoomCleaningSopStep[] @relation("RoomCleaningSopStepAuthorizedBy")
+  createdRoomInspection1SopSteps RoomInspection1SopStep[] @relation("RoomInspection1SopStepCreatedBy")
+  updatedRoomInspection1SopSteps RoomInspection1SopStep[] @relation("RoomInspection1SopStepUpdatedBy")
+  uploadedInsp1Media             RoomInspection1SopStepMedia[] @relation("Insp1MediaUploadedBy")
+  createdRoomInspection2SopSteps RoomInspection2SopStep[] @relation("RoomInspection2SopStepCreatedBy")
+  updatedRoomInspection2SopSteps RoomInspection2SopStep[] @relation("RoomInspection2SopStepUpdatedBy")
+  uploadedInsp2Media             RoomInspection2SopStepMedia[] @relation("Insp2MediaUploadedBy")
+  createdRoomQacSopSteps         RoomQacSopStep[] @relation("RoomQacSopStepCreatedBy")
+  updatedRoomQacSopSteps         RoomQacSopStep[] @relation("RoomQacSopStepUpdatedBy")
+  uploadedQacMedia               RoomQacSopStepMedia[] @relation("QacMediaUploadedBy")
+  createdEquCleaningSopSteps     EquCleaningSopStep[] @relation("EquCleaningSopStepCreatedBy")
+  updatedEquCleaningSopSteps     EquCleaningSopStep[] @relation("EquCleaningSopStepUpdatedBy")
+  authorizedEquCleaningSopSteps  EquCleaningSopStep[] @relation("EquCleaningSopStepAuthorizedBy")
+  uploadedEquSopMedia            EquCleaningSopStepMedia[] @relation("EquSopMediaUploadedBy")
+  createdEquInsp1SopSteps        EquInspection1SopStep[] @relation("EquInsp1SopStepCreatedBy")
+  updatedEquInsp1SopSteps        EquInspection1SopStep[] @relation("EquInsp1SopStepUpdatedBy")
+  uploadedEquInsp1Media          EquInspection1SopStepMedia[] @relation("EquInsp1MediaUploadedBy")
+  createdEquInsp2SopSteps        EquInspection2SopStep[] @relation("EquInsp2SopStepCreatedBy")
+  updatedEquInsp2SopSteps        EquInspection2SopStep[] @relation("EquInsp2SopStepUpdatedBy")
+  uploadedEquInsp2Media          EquInspection2SopStepMedia[] @relation("EquInsp2MediaUploadedBy")
+  createdEquQacSopSteps          EquQacSopStep[] @relation("EquQacSopStepCreatedBy")
+  updatedEquQacSopSteps          EquQacSopStep[] @relation("EquQacSopStepUpdatedBy")
+  uploadedEquQacMedia            EquQacSopStepMedia[] @relation("EquQacMediaUploadedBy")
+  createdStandardWeights         StandardWeight[] @relation("StandardWeightCreatedBy")
+  updatedStandardWeights         StandardWeight[] @relation("StandardWeightUpdatedBy")
+  createdScales                  Scale[] @relation("ScaleCreatedBy")
+  updatedScales                  Scale[] @relation("ScaleUpdatedBy")
 
   @@index([username])
   @@index([isActive])
@@ -295,3 +326,480 @@ model FunctionType {
   @@index([displayOrder])
   @@map("function_types")
 }
+
+model RoomCleaningType {
+  id                  String   @id @default(uuid()) @db.Uuid
+  /// Auto-generated code: RCT-001, RCT-002 …
+  cleaningTypeCode    String   @unique @map("cleaning_type_code") @db.VarChar(20)
+  cleaningTypeName    String   @unique @map("cleaning_type_name") @db.VarChar(150)
+  cleaningTypeDetails String?  @map("cleaning_type_details")
+  /// TypeA=Dry, TypeB=Wet, TypeC=Sanitization
+  defaultMethod       String?  @map("default_method") @db.VarChar(10)
+  displayOrder        Int      @default(0) @map("display_order")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdBy           String?  @map("created_by") @db.Uuid
+  updatedBy           String?  @map("updated_by") @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser User?                @relation("RoomCleaningTypeCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User?                @relation("RoomCleaningTypeUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  sopSteps         RoomCleaningSopStep[]
+  inspection1Steps RoomInspection1SopStep[]
+  inspection2Steps RoomInspection2SopStep[]
+  qacSteps         RoomQacSopStep[]
+  equCleaningSteps EquCleaningSopStep[]
+  equInspection1Steps EquInspection1SopStep[]
+  equInspection2Steps EquInspection2SopStep[]
+  equQacSteps         EquQacSopStep[]
+
+  @@index([isActive])
+  @@index([displayOrder])
+  @@map("room_cleaning_types")
+}
+
+model RoomCleaningSopStep {
+  id                        String    @id @default(uuid()) @db.Uuid
+  /// Auto-generated S.No for display; renumbered by app on delete
+  slid                      Int       @map("slid")
+  cleaningTypeId            String    @map("cleaning_type_id") @db.Uuid
+  stepNumber                Int       @map("step_number")
+  /// Display string e.g. "00:05" — INTERVAL column handled by DB separately
+  timeAllottedDisplay       String?   @map("time_allotted_display") @db.VarChar(10)
+  /// TypeA=Dry, TypeB=Wet, TypeC=Sanitization
+  cleaningMethod            String    @map("cleaning_method") @db.VarChar(10)
+  /// Before | After | NA
+  equipmentCleaningSequence String    @default("NA") @map("equipment_cleaning_sequence") @db.VarChar(10)
+  procedureText             String    @map("procedure_text")
+  chemicalUsed              String?   @map("chemical_used") @db.VarChar(200)
+  /// pending | approved | rejected | archived
+  status                    String    @default("approved") @map("status") @db.VarChar(20)
+  authorizedBy              String?   @map("authorized_by") @db.Uuid
+  authorizedAt              DateTime? @map("authorized_at") @db.Timestamptz(6)
+  authorizationRemarks      String?   @map("authorization_remarks")
+  createdBy                 String?   @map("created_by") @db.Uuid
+  updatedBy                 String?   @map("updated_by") @db.Uuid
+  createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  cleaningType     RoomCleaningType @relation(fields: [cleaningTypeId], references: [id], onDelete: Restrict)
+  createdByUser    User?            @relation("RoomCleaningSopStepCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser    User?            @relation("RoomCleaningSopStepUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  authorizedByUser User?            @relation("RoomCleaningSopStepAuthorizedBy", fields: [authorizedBy], references: [id], onDelete: SetNull)
+
+  @@unique([cleaningTypeId, stepNumber], name: "uq_step_per_type")
+  @@index([cleaningTypeId, stepNumber])
+  @@index([status])
+  @@map("room_cleaning_sop_steps")
+}
+
+model RoomInspection1SopStep {
+  id                   String    @id @default(uuid()) @db.Uuid
+  /// Auto-generated S.No for display; renumbered by app on delete
+  slid                 Int       @map("slid")
+  cleaningTypeId       String    @map("cleaning_type_id") @db.Uuid
+  stepNumber           Int       @map("step_number")
+  procedureText        String    @map("procedure_text")
+  /// pending | approved | rejected | archived
+  status               String    @default("approved") @map("status") @db.VarChar(20)
+  authorizedBy         String?   @map("authorized_by") @db.Uuid
+  authorizedAt         DateTime? @map("authorized_at") @db.Timestamptz(6)
+  authorizationRemarks String?   @map("authorization_remarks")
+  createdBy            String?   @map("created_by") @db.Uuid
+  updatedBy            String?   @map("updated_by") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  cleaningType  RoomCleaningType               @relation(fields: [cleaningTypeId], references: [id], onDelete: Restrict)
+  createdByUser User?                          @relation("RoomInspection1SopStepCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User?                          @relation("RoomInspection1SopStepUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  media         RoomInspection1SopStepMedia[]
+
+  @@unique([cleaningTypeId, stepNumber], name: "uq_insp1_step_per_type")
+  @@index([cleaningTypeId, stepNumber])
+  @@index([status])
+  @@map("room_inspection1_sop_steps")
+}
+
+model RoomInspection1SopStepMedia {
+  id           String   @id @default(uuid()) @db.Uuid
+  sopStepId    String   @map("sop_step_id") @db.Uuid
+  displayOrder Int      @default(1) @map("display_order")
+  fileUrl      String   @map("file_url") @db.VarChar(500)
+  fileName     String?  @map("file_name") @db.VarChar(255)
+  fileType     String?  @map("file_type") @db.VarChar(100)
+  caption      String?  @map("caption")
+  uploadedBy   String?  @map("uploaded_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  sopStep        RoomInspection1SopStep @relation(fields: [sopStepId], references: [id], onDelete: Cascade)
+  uploadedByUser User?                  @relation("Insp1MediaUploadedBy", fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([sopStepId, displayOrder])
+  @@map("room_inspection1_sop_step_media")
+}
+
+// ── Inspection 2 ──────────────────────────────────────────────────────────────
+
+model RoomInspection2SopStep {
+  id                   String    @id @default(uuid()) @db.Uuid
+  slid                 Int       @map("slid")
+  cleaningTypeId       String    @map("cleaning_type_id") @db.Uuid
+  stepNumber           Int       @map("step_number")
+  procedureText        String    @map("procedure_text")
+  status               String    @default("approved") @map("status") @db.VarChar(20)
+  authorizedBy         String?   @map("authorized_by") @db.Uuid
+  authorizedAt         DateTime? @map("authorized_at") @db.Timestamptz(6)
+  authorizationRemarks String?   @map("authorization_remarks")
+  createdBy            String?   @map("created_by") @db.Uuid
+  updatedBy            String?   @map("updated_by") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  cleaningType  RoomCleaningType               @relation(fields: [cleaningTypeId], references: [id], onDelete: Restrict)
+  createdByUser User?                          @relation("RoomInspection2SopStepCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User?                          @relation("RoomInspection2SopStepUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  media         RoomInspection2SopStepMedia[]
+
+  @@unique([cleaningTypeId, stepNumber], name: "uq_insp2_step_per_type")
+  @@index([cleaningTypeId, stepNumber])
+  @@index([status])
+  @@map("room_inspection2_sop_steps")
+}
+
+model RoomInspection2SopStepMedia {
+  id           String   @id @default(uuid()) @db.Uuid
+  sopStepId    String   @map("sop_step_id") @db.Uuid
+  displayOrder Int      @default(1) @map("display_order")
+  fileUrl      String   @map("file_url") @db.VarChar(500)
+  fileName     String?  @map("file_name") @db.VarChar(255)
+  fileType     String?  @map("file_type") @db.VarChar(100)
+  caption      String?  @map("caption")
+  uploadedBy   String?  @map("uploaded_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  sopStep        RoomInspection2SopStep @relation(fields: [sopStepId], references: [id], onDelete: Cascade)
+  uploadedByUser User?                  @relation("Insp2MediaUploadedBy", fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([sopStepId, displayOrder])
+  @@map("room_inspection2_sop_step_media")
+}
+
+// ── Room QAC ──────────────────────────────────────────────────────────────────
+
+model RoomQacSopStep {
+  id                   String    @id @default(uuid()) @db.Uuid
+  slid                 Int       @map("slid")
+  cleaningTypeId       String    @map("cleaning_type_id") @db.Uuid
+  stepNumber           Int       @map("step_number")
+  procedureText        String    @map("procedure_text")
+  status               String    @default("approved") @map("status") @db.VarChar(20)
+  authorizedBy         String?   @map("authorized_by") @db.Uuid
+  authorizedAt         DateTime? @map("authorized_at") @db.Timestamptz(6)
+  authorizationRemarks String?   @map("authorization_remarks")
+  createdBy            String?   @map("created_by") @db.Uuid
+  updatedBy            String?   @map("updated_by") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  cleaningType  RoomCleaningType    @relation(fields: [cleaningTypeId], references: [id], onDelete: Restrict)
+  createdByUser User?               @relation("RoomQacSopStepCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User?               @relation("RoomQacSopStepUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  media         RoomQacSopStepMedia[]
+
+  @@unique([cleaningTypeId, stepNumber], name: "uq_qac_step_per_type")
+  @@index([cleaningTypeId, stepNumber])
+  @@index([status])
+  @@map("room_qac_sop_steps")
+}
+
+model RoomQacSopStepMedia {
+  id           String   @id @default(uuid()) @db.Uuid
+  sopStepId    String   @map("sop_step_id") @db.Uuid
+  displayOrder Int      @default(1) @map("display_order")
+  fileUrl      String   @map("file_url") @db.VarChar(500)
+  fileName     String?  @map("file_name") @db.VarChar(255)
+  fileType     String?  @map("file_type") @db.VarChar(100)
+  caption      String?  @map("caption")
+  uploadedBy   String?  @map("uploaded_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  sopStep        RoomQacSopStep @relation(fields: [sopStepId], references: [id], onDelete: Cascade)
+  uploadedByUser User?          @relation("QacMediaUploadedBy", fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([sopStepId, displayOrder])
+  @@map("room_qac_sop_step_media")
+}
+
+// ── Equipment Cleaning SOP ────────────────────────────────────────────────────
+
+model EquCleaningSopStep {
+  id                   String    @id @default(uuid()) @db.Uuid
+  /// Auto-generated S.No for display; renumbered by app on delete
+  slid                 Int       @map("slid")
+  cleaningTypeId       String    @map("cleaning_type_id") @db.Uuid
+  stepNumber           Int       @map("step_number")
+  timeAllottedDisplay  String?   @map("time_allotted_display") @db.VarChar(10)
+  /// TypeA=Dry, TypeB=Wet, TypeC=Sanitization
+  cleaningMethod       String    @map("cleaning_method") @db.VarChar(10)
+  procedureText        String    @map("procedure_text")
+  chemicalUsed         String?   @map("chemical_used") @db.VarChar(200)
+  /// Equipment used in this step e.g. "Mop", "Lint-free wipe"
+  equipmentUsed        String?   @map("equipment_used") @db.VarChar(300)
+  /// pending | approved | rejected | archived
+  status               String    @default("approved") @map("status") @db.VarChar(20)
+  authorizedBy         String?   @map("authorized_by") @db.Uuid
+  authorizedAt         DateTime? @map("authorized_at") @db.Timestamptz(6)
+  authorizationRemarks String?   @map("authorization_remarks")
+  createdBy            String?   @map("created_by") @db.Uuid
+  updatedBy            String?   @map("updated_by") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  cleaningType      RoomCleaningType          @relation(fields: [cleaningTypeId], references: [id], onDelete: Restrict)
+  createdByUser     User?                     @relation("EquCleaningSopStepCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser     User?                     @relation("EquCleaningSopStepUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  authorizedByUser  User?                     @relation("EquCleaningSopStepAuthorizedBy", fields: [authorizedBy], references: [id], onDelete: SetNull)
+  media             EquCleaningSopStepMedia[]
+
+  @@unique([cleaningTypeId, stepNumber], name: "uq_equ_sop_step_per_type")
+  @@index([cleaningTypeId, stepNumber])
+  @@index([status])
+  @@map("equ_cleaning_sop_steps")
+}
+
+model EquCleaningSopStepMedia {
+  id           String   @id @default(uuid()) @db.Uuid
+  sopStepId    String   @map("sop_step_id") @db.Uuid
+  displayOrder Int      @default(1) @map("display_order")
+  fileUrl      String   @map("file_url") @db.VarChar(500)
+  fileName     String?  @map("file_name") @db.VarChar(255)
+  fileType     String?  @map("file_type") @db.VarChar(100)
+  caption      String?  @map("caption")
+  uploadedBy   String?  @map("uploaded_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  sopStep        EquCleaningSopStep @relation(fields: [sopStepId], references: [id], onDelete: Cascade)
+  uploadedByUser User?              @relation("EquSopMediaUploadedBy", fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([sopStepId, displayOrder])
+  @@map("equ_cleaning_sop_step_media")
+}
+
+// ── Equipment Inspection 1 ────────────────────────────────────────────────────
+
+model EquInspection1SopStep {
+  id                   String    @id @default(uuid()) @db.Uuid
+  slid                 Int       @map("slid")
+  cleaningTypeId       String    @map("cleaning_type_id") @db.Uuid
+  stepNumber           Int       @map("step_number")
+  procedureText        String    @map("procedure_text")
+  status               String    @default("approved") @map("status") @db.VarChar(20)
+  authorizedBy         String?   @map("authorized_by") @db.Uuid
+  authorizedAt         DateTime? @map("authorized_at") @db.Timestamptz(6)
+  authorizationRemarks String?   @map("authorization_remarks")
+  createdBy            String?   @map("created_by") @db.Uuid
+  updatedBy            String?   @map("updated_by") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  cleaningType  RoomCleaningType               @relation(fields: [cleaningTypeId], references: [id], onDelete: Restrict)
+  createdByUser User?                          @relation("EquInsp1SopStepCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User?                          @relation("EquInsp1SopStepUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  media         EquInspection1SopStepMedia[]
+
+  @@unique([cleaningTypeId, stepNumber], name: "uq_equ_insp1_step_per_type")
+  @@index([cleaningTypeId, stepNumber])
+  @@index([status])
+  @@map("equ_inspection1_sop_steps")
+}
+
+model EquInspection1SopStepMedia {
+  id           String   @id @default(uuid()) @db.Uuid
+  sopStepId    String   @map("sop_step_id") @db.Uuid
+  displayOrder Int      @default(1) @map("display_order")
+  fileUrl      String   @map("file_url") @db.VarChar(500)
+  fileName     String?  @map("file_name") @db.VarChar(255)
+  fileType     String?  @map("file_type") @db.VarChar(100)
+  caption      String?  @map("caption")
+  uploadedBy   String?  @map("uploaded_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  sopStep        EquInspection1SopStep @relation(fields: [sopStepId], references: [id], onDelete: Cascade)
+  uploadedByUser User?                 @relation("EquInsp1MediaUploadedBy", fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([sopStepId, displayOrder])
+  @@map("equ_inspection1_sop_step_media")
+}
+
+// ── Equipment Inspection 2 ────────────────────────────────────────────────────
+
+model EquInspection2SopStep {
+  id                   String    @id @default(uuid()) @db.Uuid
+  slid                 Int       @map("slid")
+  cleaningTypeId       String    @map("cleaning_type_id") @db.Uuid
+  stepNumber           Int       @map("step_number")
+  procedureText        String    @map("procedure_text")
+  status               String    @default("approved") @map("status") @db.VarChar(20)
+  authorizedBy         String?   @map("authorized_by") @db.Uuid
+  authorizedAt         DateTime? @map("authorized_at") @db.Timestamptz(6)
+  authorizationRemarks String?   @map("authorization_remarks")
+  createdBy            String?   @map("created_by") @db.Uuid
+  updatedBy            String?   @map("updated_by") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  cleaningType  RoomCleaningType               @relation(fields: [cleaningTypeId], references: [id], onDelete: Restrict)
+  createdByUser User?                          @relation("EquInsp2SopStepCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User?                          @relation("EquInsp2SopStepUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  media         EquInspection2SopStepMedia[]
+
+  @@unique([cleaningTypeId, stepNumber], name: "uq_equ_insp2_step_per_type")
+  @@index([cleaningTypeId, stepNumber])
+  @@index([status])
+  @@map("equ_inspection2_sop_steps")
+}
+
+model EquInspection2SopStepMedia {
+  id           String   @id @default(uuid()) @db.Uuid
+  sopStepId    String   @map("sop_step_id") @db.Uuid
+  displayOrder Int      @default(1) @map("display_order")
+  fileUrl      String   @map("file_url") @db.VarChar(500)
+  fileName     String?  @map("file_name") @db.VarChar(255)
+  fileType     String?  @map("file_type") @db.VarChar(100)
+  caption      String?  @map("caption")
+  uploadedBy   String?  @map("uploaded_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  sopStep        EquInspection2SopStep @relation(fields: [sopStepId], references: [id], onDelete: Cascade)
+  uploadedByUser User?                 @relation("EquInsp2MediaUploadedBy", fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([sopStepId, displayOrder])
+  @@map("equ_inspection2_sop_step_media")
+}
+
+// ── Equipment QAC ─────────────────────────────────────────────────────────────
+
+model EquQacSopStep {
+  id                   String    @id @default(uuid()) @db.Uuid
+  slid                 Int       @map("slid")
+  cleaningTypeId       String    @map("cleaning_type_id") @db.Uuid
+  stepNumber           Int       @map("step_number")
+  procedureText        String    @map("procedure_text")
+  status               String    @default("approved") @map("status") @db.VarChar(20)
+  authorizedBy         String?   @map("authorized_by") @db.Uuid
+  authorizedAt         DateTime? @map("authorized_at") @db.Timestamptz(6)
+  authorizationRemarks String?   @map("authorization_remarks")
+  createdBy            String?   @map("created_by") @db.Uuid
+  updatedBy            String?   @map("updated_by") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  cleaningType  RoomCleaningType    @relation(fields: [cleaningTypeId], references: [id], onDelete: Restrict)
+  createdByUser User?               @relation("EquQacSopStepCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User?               @relation("EquQacSopStepUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  media         EquQacSopStepMedia[]
+
+  @@unique([cleaningTypeId, stepNumber], name: "uq_equ_qac_step_per_type")
+  @@index([cleaningTypeId, stepNumber])
+  @@index([status])
+  @@map("equ_qac_sop_steps")
+}
+
+model EquQacSopStepMedia {
+  id           String   @id @default(uuid()) @db.Uuid
+  sopStepId    String   @map("sop_step_id") @db.Uuid
+  displayOrder Int      @default(1) @map("display_order")
+  fileUrl      String   @map("file_url") @db.VarChar(500)
+  fileName     String?  @map("file_name") @db.VarChar(255)
+  fileType     String?  @map("file_type") @db.VarChar(100)
+  caption      String?  @map("caption")
+  uploadedBy   String?  @map("uploaded_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  sopStep        EquQacSopStep @relation(fields: [sopStepId], references: [id], onDelete: Cascade)
+  uploadedByUser User?         @relation("EquQacMediaUploadedBy", fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([sopStepId, displayOrder])
+  @@map("equ_qac_sop_step_media")
+}
+
+// ── Standard Weights ──────────────────────────────────────────────────────────
+
+model StandardWeight {
+  id                      String    @id @default(uuid()) @db.Uuid
+  slid                    Int       @default(autoincrement()) @map("slid")
+  weightSerialNo          String    @unique @map("weight_serial_no") @db.VarChar(20)
+  standardWeight          String    @map("standard_weight") @db.VarChar(20)
+  weightValueGrams        Decimal   @map("weight_value_grams") @db.Decimal(12, 4)
+  lastCalibratedOn        DateTime? @map("last_calibrated_on") @db.Date
+  nextCalibrationDue      DateTime? @map("next_calibration_due") @db.Date
+  calibrationIntervalDays Int       @default(365) @map("calibration_interval_days")
+  toleranceLimit          String?   @map("tolerance_limit") @db.VarChar(20)
+  toleranceGrams          Decimal?  @map("tolerance_grams") @db.Decimal(10, 6)
+  calibrationLab          String?   @map("calibration_lab") @db.VarChar(150)
+  certificateNumber       String?   @map("certificate_number") @db.VarChar(100)
+  certificateUrl          String?   @map("certificate_url") @db.VarChar(500)
+  material                String?   @map("material") @db.VarChar(100)
+  accuracyClass           String?   @map("accuracy_class") @db.VarChar(20)
+  storageLocation         String?   @map("storage_location") @db.VarChar(150)
+  isActive                Boolean   @default(true) @map("is_active")
+  inactiveReason          String?   @map("inactive_reason")
+  createdBy               String?   @map("created_by") @db.Uuid
+  updatedBy               String?   @map("updated_by") @db.Uuid
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser User? @relation("StandardWeightCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User? @relation("StandardWeightUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([weightSerialNo])
+  @@index([nextCalibrationDue])
+  @@index([isActive])
+  @@map("standard_weights")
+}
+
+// ── Scales ────────────────────────────────────────────────────────────────────
+
+model Scale {
+  id                      String    @id @default(uuid()) @db.Uuid
+  slid                    Int       @default(autoincrement()) @map("slid")
+  scaleId                 String    @unique @map("scale_id") @db.VarChar(20)
+  scaleNumber             String    @unique @map("scale_number") @db.VarChar(50)
+  minRange                String?   @map("min_range") @db.VarChar(20)
+  minRangeGrams           Decimal?  @map("min_range_grams") @db.Decimal(12, 6)
+  maxRange                String?   @map("max_range") @db.VarChar(20)
+  maxRangeGrams           Decimal?  @map("max_range_grams") @db.Decimal(12, 6)
+  capacity                String?   @map("capacity") @db.VarChar(20)
+  capacityGrams           Decimal?  @map("capacity_grams") @db.Decimal(12, 6)
+  leastCount              String?   @map("least_count") @db.VarChar(20)
+  leastCountGrams         Decimal?  @map("least_count_grams") @db.Decimal(12, 8)
+  lastVerifiedOn          DateTime? @map("last_verified_on") @db.Date
+  nextVerificationDue     DateTime? @map("next_verification_due") @db.Date
+  verificationIntervalDays Int      @default(1) @map("verification_interval_days")
+  formVerificationNo      String?   @map("form_verification_no") @db.VarChar(20)
+  nextCalibrationDue      DateTime? @map("next_calibration_due") @db.Date
+  calibrationIntervalDays Int       @default(365) @map("calibration_interval_days")
+  formCalibrationNo       String?   @map("form_calibration_no") @db.VarChar(20)
+  manufacturer            String?   @map("manufacturer") @db.VarChar(100)
+  modelNumber             String?   @map("model_number") @db.VarChar(100)
+  scaleType               String?   @map("scale_type") @db.VarChar(20)
+  status                  String    @default("active") @map("status") @db.VarChar(20)
+  statusReason            String?   @map("status_reason")
+  isActive                Boolean   @default(true) @map("is_active")
+  createdBy               String?   @map("created_by") @db.Uuid
+  updatedBy               String?   @map("updated_by") @db.Uuid
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser User? @relation("ScaleCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User? @relation("ScaleUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([scaleId])
+  @@index([scaleNumber])
+  @@index([isActive, status])
+  @@index([nextVerificationDue])
+  @@index([nextCalibrationDue])
+  @@map("scales")
+}
+

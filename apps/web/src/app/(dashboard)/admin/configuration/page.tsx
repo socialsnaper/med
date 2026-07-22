@@ -53,36 +53,11 @@ const CONFIG_ITEMS = [
     href: "/admin/configuration/function",
     color: "bg-cyan-500/10 text-cyan-600",
   },
-  {
-    label: "Product",
-    icon: Box,
-    href: "/admin/configuration/product",
-    color: "bg-green-500/10 text-green-600",
-  },
-  {
-    label: "Process Batch",
-    icon: Layers,
-    href: "/admin/configuration/process-batch",
-    color: "bg-indigo-500/10 text-indigo-600",
-  },
-  {
-    label: "SOP Files",
-    icon: FileText,
-    href: "/admin/configuration/sop-files",
-    color: "bg-yellow-500/10 text-yellow-600",
-  },
-  {
-    label: "Forms",
-    icon: ClipboardList,
-    href: "/admin/configuration/forms",
-    color: "bg-pink-500/10 text-pink-600",
-  },
-  {
-    label: "Tools",
-    icon: Wrench,
-    href: "/admin/configuration/tools",
-    color: "bg-stone-500/10 text-stone-600",
-  },
+  // { label: "Product", icon: Box, href: "/admin/configuration/product", color: "bg-green-500/10 text-green-600" },
+  // { label: "Process Batch", icon: Layers, href: "/admin/configuration/process-batch", color: "bg-indigo-500/10 text-indigo-600" },
+  // { label: "SOP Files", icon: FileText, href: "/admin/configuration/sop-files", color: "bg-yellow-500/10 text-yellow-600" },
+  // { label: "Forms", icon: ClipboardList, href: "/admin/configuration/forms", color: "bg-pink-500/10 text-pink-600" },
+  // { label: "Tools", icon: Wrench, href: "/admin/configuration/tools", color: "bg-stone-500/10 text-stone-600" },
   {
     label: "Weight",
     icon: Scale,
@@ -100,6 +75,12 @@ const CONFIG_ITEMS = [
     icon: Sparkles,
     href: "/admin/configuration/cleaning-equipment",
     color: "bg-sky-500/10 text-sky-600",
+  },
+  {
+    label: "Cleaning Type",
+    icon: Droplets,
+    href: "/admin/configuration/cleaning-type",
+    color: "bg-teal-400/10 text-teal-600",
   },
   {
     label: "Cleaning Aids",
@@ -125,12 +106,7 @@ const CONFIG_ITEMS = [
     href: "/admin/configuration/eqp-details",
     color: "bg-rose-500/10 text-rose-600",
   },
-  {
-    label: "Room Details",
-    icon: Building,
-    href: "/admin/configuration/room-details",
-    color: "bg-amber-500/10 text-amber-600",
-  },
+  // { label: "Room Details", icon: Building, href: "/admin/configuration/room-details", color: "bg-amber-500/10 text-amber-600" },
   {
     label: "SOP Approval",
     icon: BadgeCheck,

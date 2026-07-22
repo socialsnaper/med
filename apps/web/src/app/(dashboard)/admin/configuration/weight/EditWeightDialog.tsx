@@ -58,7 +58,7 @@ export function EditWeightDialog({ open, item, onClose, onUpdated }: Props) {
       weightSerialNo: "", standardWeight: "", weightValueGrams: 0,
       lastCalibratedOn: "", nextCalibrationDue: "",
       calibrationIntervalDays: 365,
-      toleranceLimit: "", material: "", accuracyClass: "",
+      toleranceLimit: "",
       storageLocation: "", calibrationLab: "", certificateNumber: "",
       isActive: "true", inactiveReason: "",
     },
@@ -76,8 +76,6 @@ export function EditWeightDialog({ open, item, onClose, onUpdated }: Props) {
         nextCalibrationDue:      item.nextCalibrationDue  ?? "",
         calibrationIntervalDays: item.calibrationIntervalDays,
         toleranceLimit:          item.toleranceLimit      ?? "",
-        material:                item.material            ?? "",
-        accuracyClass:           item.accuracyClass       ?? "",
         storageLocation:         item.storageLocation     ?? "",
         calibrationLab:          item.calibrationLab      ?? "",
         certificateNumber:       item.certificateNumber   ?? "",
@@ -100,8 +98,6 @@ export function EditWeightDialog({ open, item, onClose, onUpdated }: Props) {
         nextCalibrationDue:      values.nextCalibrationDue      || null,
         calibrationIntervalDays: values.calibrationIntervalDays,
         toleranceLimit:          values.toleranceLimit          || null,
-        material:                values.material                || null,
-        accuracyClass:           values.accuracyClass           || null,
         storageLocation:         values.storageLocation         || null,
         calibrationLab:          values.calibrationLab          || null,
         certificateNumber:       values.certificateNumber        || null,
@@ -198,24 +194,6 @@ export function EditWeightDialog({ open, item, onClose, onUpdated }: Props) {
                 <FormItem>
                   <FormLabel>Calibration Interval (days)</FormLabel>
                   <FormControl><Input type="number" min="1" placeholder="365" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-
-              <FormField control={form.control} name="accuracyClass" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Accuracy Class</FormLabel>
-                  <FormControl><Input placeholder="Class E2" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="material" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Material</FormLabel>
-                  <FormControl><Input placeholder="Stainless Steel (AISI 316)" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

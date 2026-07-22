@@ -162,6 +162,7 @@ async function issueFullTokens(db, user, schemaName, ip, userAgent) {
     const accessPayload = {
         sub: user.id, sid: schemaName,
         role: user.roleId, roleName: user.role.roleName,
+        username: user.username, firstName: user.firstName, lastName: user.lastName,
         perms: permissions,
     };
     const accessToken = jsonwebtoken_1.default.sign(accessPayload, getJwtSecret(), { expiresIn: ACCESS_TOKEN_TTL });
@@ -438,7 +439,16 @@ async function refreshAccessToken(rawRefreshToken) {
     // Issue new pair
     const jti = (0, crypto_1.randomUUID)();
     const permissions = (user.role.permissions ?? {});
-    const newAccessToken = jsonwebtoken_1.default.sign({ sub: user.id, sid: payload.sid, role: user.roleId, perms: permissions }, getJwtSecret(), { expiresIn: ACCESS_TOKEN_TTL });
+    const newAccessToken = jsonwebtoken_1.default.sign({
+        sub: user.id,
+        sid: payload.sid,
+        role: user.roleId,
+        roleName: user.role.roleName,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        perms: permissions,
+    }, getJwtSecret(), { expiresIn: ACCESS_TOKEN_TTL });
     const newRefreshToken = jsonwebtoken_1.default.sign({ sub: user.id, sid: payload.sid, jti }, getJwtRefreshSecret(), { expiresIn: REFRESH_TOKEN_TTL });
     const newHash = crypto_1.default.createHash('sha256').update(newRefreshToken).digest('hex');
     await db.refreshToken.create({
