@@ -33,7 +33,6 @@ const schema = z.object({
   chemicalUsed:        z.string().max(200).optional(),
   equipmentUsed:       z.string().max(300).optional(),
 })
-type FormInput  = z.input<typeof schema>
 type FormValues = z.output<typeof schema>
 
 interface Props {
@@ -70,8 +69,8 @@ export function AddEquCleaningSopStepDialog({ open, onClose, onCreated, cleaning
     setPending((prev) => { const found = prev.find((p) => p.id === id); if (found) URL.revokeObjectURL(found.previewUrl); return prev.filter((p) => p.id !== id) })
   }
 
-  const form = useForm<FormInput, unknown, FormValues>({
-    resolver: zodResolver(schema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema) as any,
     defaultValues: { cleaningTypeId: defaultTypeId ?? "", stepNumber: 1, timeAllottedDisplay: "", cleaningMethod: "TypeB", procedureText: "", chemicalUsed: "", equipmentUsed: "" },
   })
 

@@ -47,7 +47,6 @@ const schema = z.object({
   isActive:           z.enum(["true", "false"]),
 })
 
-type FormInput  = z.input<typeof schema>
 type FormValues = z.output<typeof schema>
 
 interface Props {
@@ -61,8 +60,8 @@ export function EditProcessTypeDialog({ item, onClose, onUpdated, groups }: Prop
   const { getAccessToken } = useAuth()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const form = useForm<FormInput, unknown, FormValues>({
-    resolver: zodResolver(schema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       processType: "", processDetails: "", processGroup: "",
       typicalDurationMin: "", requiresCleanRoom: false,

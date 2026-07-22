@@ -35,7 +35,6 @@ const schema = z.object({
   isActive:                z.boolean(),
 })
 
-type FormInput  = z.input<typeof schema>
 type FormValues = z.output<typeof schema>
 
 interface Props {
@@ -48,8 +47,8 @@ export function AddWeightDialog({ open, onClose, onCreated }: Props) {
   const { getAccessToken } = useAuth()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const form = useForm<FormInput, unknown, FormValues>({
-    resolver: zodResolver(schema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       weightSerialNo: "", standardWeight: "", weightValueGrams: 0,
       lastCalibratedOn: "", nextCalibrationDue: "",

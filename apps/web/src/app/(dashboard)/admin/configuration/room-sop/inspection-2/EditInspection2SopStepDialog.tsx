@@ -40,7 +40,6 @@ const schema = z.object({
   procedureText: z.string().min(1, "Procedure is required").max(5000),
   status:        z.enum(INSP2_STATUSES),
 })
-type FormInput  = z.input<typeof schema>
 type FormValues = z.output<typeof schema>
 
 interface Props {
@@ -59,8 +58,8 @@ export function EditInspection2SopStepDialog({ item, onClose, onUpdated, onMedia
   const [picError,    setPicError]    = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const form = useForm<FormInput, unknown, FormValues>({
-    resolver: zodResolver(schema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema) as any,
     defaultValues: { stepNumber: 1, procedureText: "", status: "approved" },
   })
 

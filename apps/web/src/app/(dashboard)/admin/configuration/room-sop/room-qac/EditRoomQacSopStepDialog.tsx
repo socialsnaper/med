@@ -25,7 +25,6 @@ const schema = z.object({
   procedureText: z.string().min(1, "Procedure is required").max(5000),
   status:        z.enum(QAC_STATUSES),
 })
-type FormInput  = z.input<typeof schema>
 type FormValues = z.output<typeof schema>
 interface Props { item: RoomQacSopStepItem | null; onClose: () => void; onUpdated: (item: RoomQacSopStepItem) => void; onMediaChange?: (stepId: string, media: QacMediaItem[]) => void }
 
@@ -38,7 +37,7 @@ export function EditRoomQacSopStepDialog({ item, onClose, onUpdated, onMediaChan
   const [picError,    setPicError]    = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const form = useForm<FormInput, unknown, FormValues>({ resolver: zodResolver(schema), defaultValues: { stepNumber: 1, procedureText: "", status: "approved" } })
+  const form = useForm<FormValues>({ resolver: zodResolver(schema) as any, defaultValues: { stepNumber: 1, procedureText: "", status: "approved" } })
 
   useEffect(() => {
     if (item) {

@@ -43,7 +43,6 @@ const schema = z.object({
   status:        z.enum(INSP1_STATUSES),
 })
 
-type FormInput  = z.input<typeof schema>
 type FormValues = z.output<typeof schema>
 
 interface Props {
@@ -78,8 +77,8 @@ export function EditInspection1SopStepDialog({ item, onClose, onUpdated, onMedia
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item])
 
-  const form = useForm<FormInput, unknown, FormValues>({
-    resolver: zodResolver(schema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema) as any,
     defaultValues: { stepNumber: 1, procedureText: "", status: "approved" },
   })
 

@@ -37,7 +37,6 @@ const schema = z.object({
   equipmentUsed:       z.string().max(300).optional(),
   status:              z.enum(EQU_SOP_STATUSES),
 })
-type FormInput  = z.input<typeof schema>
 type FormValues = z.output<typeof schema>
 
 interface Props {
@@ -56,8 +55,8 @@ export function EditEquCleaningSopStepDialog({ item, onClose, onUpdated, onMedia
   const [picError,    setPicError]    = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const form = useForm<FormInput, unknown, FormValues>({
-    resolver: zodResolver(schema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema) as any,
     defaultValues: { stepNumber: 1, timeAllottedDisplay: "", cleaningMethod: "TypeB", procedureText: "", chemicalUsed: "", equipmentUsed: "", status: "approved" },
   })
 

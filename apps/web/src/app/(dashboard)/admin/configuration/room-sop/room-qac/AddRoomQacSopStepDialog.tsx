@@ -23,7 +23,6 @@ const schema = z.object({
   stepNumber:     z.coerce.number().int().min(1, "Step number must be ≥ 1"),
   procedureText:  z.string().min(1, "Procedure is required").max(5000),
 })
-type FormInput  = z.input<typeof schema>
 type FormValues = z.output<typeof schema>
 interface Props { open: boolean; onClose: () => void; onCreated: (item: RoomQacSopStepItem) => void; cleaningTypes: RoomCleaningTypeItem[]; defaultTypeId?: string }
 interface PendingPic { id: string; file: File; previewUrl: string }
@@ -52,7 +51,7 @@ export function AddRoomQacSopStepDialog({ open, onClose, onCreated, cleaningType
     setPending((prev) => { const found = prev.find((p) => p.id === id); if (found) URL.revokeObjectURL(found.previewUrl); return prev.filter((p) => p.id !== id) })
   }
 
-  const form = useForm<FormInput, unknown, FormValues>({ resolver: zodResolver(schema), defaultValues: { cleaningTypeId: defaultTypeId ?? "", stepNumber: 1, procedureText: "" } })
+  const form = useForm<FormValues>({ resolver: zodResolver(schema) as any, defaultValues: { cleaningTypeId: defaultTypeId ?? "", stepNumber: 1, procedureText: "" } })
 
   async function onSubmit(values: FormValues) {
     const token = getAccessToken(); if (!token) return; setSubmitError(null)
