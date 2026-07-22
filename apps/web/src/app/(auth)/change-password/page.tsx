@@ -97,7 +97,7 @@ export default function ChangePasswordPage() {
   }, [router])
 
   const form = useForm<Values>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: { new_password: "", confirm_password: "" },
   })
 

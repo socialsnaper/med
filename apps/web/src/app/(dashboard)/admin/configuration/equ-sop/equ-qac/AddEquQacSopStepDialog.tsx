@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -24,9 +24,9 @@ export function AddEquQacSopStepDialog({ open, onClose, onCreated, cleaningTypes
   const [picError, setPicError] = useState<string | null>(null)
   const ref = useRef<HTMLInputElement>(null)
   useEffect(() => { if (!open) { pending.forEach((p) => URL.revokeObjectURL(p.previewUrl)); setPending([]); setPicError(null) } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
-  function handleFiles(e: React.ChangeEvent<HTMLInputElement>) { const files = Array.from(e.target.files ?? []); if (ref.current) ref.current.value = ""; const allowed = ["image/jpeg","image/jpg","image/png","image/webp","image/gif"]; const valid = files.filter((f) => allowed.includes(f.type)); if (valid.length < files.length) setPicError("Some files skipped â€” only JPEG/PNG/WebP/GIF"); else setPicError(null); setPending((p) => [...p, ...valid.map((f) => ({ id: `${Date.now()}-${Math.random()}`, file: f, previewUrl: URL.createObjectURL(f) }))]) }
+  function handleFiles(e: React.ChangeEvent<HTMLInputElement>) { const files = Array.from(e.target.files ?? []); if (ref.current) ref.current.value = ""; const allowed = ["image/jpeg","image/jpg","image/png","image/webp","image/gif"]; const valid = files.filter((f) => allowed.includes(f.type)); if (valid.length < files.length) setPicError("Some files skipped — only JPEG/PNG/WebP/GIF"); else setPicError(null); setPending((p) => [...p, ...valid.map((f) => ({ id: `${Date.now()}-${Math.random()}`, file: f, previewUrl: URL.createObjectURL(f) }))]) }
   function removePic(id: string) { setPending((p) => { const f = p.find((x) => x.id === id); if (f) URL.revokeObjectURL(f.previewUrl); return p.filter((x) => x.id !== id) }) }
-  const form = useForm<FV>({ resolver: zodResolver(schema), defaultValues: { cleaningTypeId: defaultTypeId ?? "", stepNumber: 1, procedureText: "" } })
+  const form = useForm<FV>({ resolver: zodResolver(schema) as any, defaultValues: { cleaningTypeId: defaultTypeId ?? "", stepNumber: 1, procedureText: "" } })
   async function onSubmit(v: FV) {
     const t = getAccessToken(); if (!t) return; setSubmitError(null)
     try {
@@ -48,7 +48,7 @@ export function AddEquQacSopStepDialog({ open, onClose, onCreated, cleaningTypes
             <FormField control={form.control} name="cleaningTypeId" render={({ field }) => (<FormItem><FormLabel>Cleaning Type <span className="text-destructive">*</span></FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger></FormControl><SelectContent>{cleaningTypes.map((ct) => <SelectItem key={ct.id} value={ct.id}>{ct.cleaningTypeName}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="stepNumber" render={({ field }) => (<FormItem><FormLabel>Step No. <span className="text-destructive">*</span></FormLabel><FormControl><Input type="number" min={1} {...field} /></FormControl><FormMessage /></FormItem>)} />
           </div>
-          <FormField control={form.control} name="procedureText" render={({ field }) => (<FormItem><FormLabel>Procedure <span className="text-destructive">*</span></FormLabel><FormControl><Textarea placeholder="Describe what the inspector must checkâ€¦" className="min-h-24 resize-none" {...field} /></FormControl><FormMessage /></FormItem>)} />
+          <FormField control={form.control} name="procedureText" render={({ field }) => (<FormItem><FormLabel>Procedure <span className="text-destructive">*</span></FormLabel><FormControl><Textarea placeholder="Describe what the inspector must check…" className="min-h-24 resize-none" {...field} /></FormControl><FormMessage /></FormItem>)} />
           <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
             <div className="flex items-center justify-between"><span className="text-sm font-medium flex items-center gap-1.5"><ImageIcon className="size-4 text-muted-foreground" /> Pictures <span className="text-xs font-normal text-muted-foreground">(optional)</span></span><button type="button" onClick={() => ref.current?.click()} className="flex items-center gap-1 rounded-md border bg-background px-2 py-1 text-xs hover:bg-accent transition-colors"><Plus className="size-3" /> Add image</button></div>
             <input ref={ref} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple className="sr-only" onChange={handleFiles} />

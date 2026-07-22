@@ -26,7 +26,7 @@ export function AddEquInsp1SopStepDialog({ open, onClose, onCreated, cleaningTyp
   useEffect(() => { if (!open) { pending.forEach((p) => URL.revokeObjectURL(p.previewUrl)); setPending([]); setPicError(null) } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
   function handleFiles(e: React.ChangeEvent<HTMLInputElement>) { const files = Array.from(e.target.files ?? []); if (ref.current) ref.current.value = ""; const allowed = ["image/jpeg","image/jpg","image/png","image/webp","image/gif"]; const valid = files.filter((f) => allowed.includes(f.type)); if (valid.length < files.length) setPicError("Some files skipped — only JPEG/PNG/WebP/GIF"); else setPicError(null); setPending((p) => [...p, ...valid.map((f) => ({ id: `${Date.now()}-${Math.random()}`, file: f, previewUrl: URL.createObjectURL(f) }))]) }
   function removePic(id: string) { setPending((p) => { const f = p.find((x) => x.id === id); if (f) URL.revokeObjectURL(f.previewUrl); return p.filter((x) => x.id !== id) }) }
-  const form = useForm<FV>({ resolver: zodResolver(schema), defaultValues: { cleaningTypeId: defaultTypeId ?? "", stepNumber: 1, procedureText: "" } })
+  const form = useForm<FV>({ resolver: zodResolver(schema) as any, defaultValues: { cleaningTypeId: defaultTypeId ?? "", stepNumber: 1, procedureText: "" } })
   async function onSubmit(v: FV) {
     const t = getAccessToken(); if (!t) return; setSubmitError(null)
     try {

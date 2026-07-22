@@ -25,7 +25,7 @@ export function EditEquInsp1SopStepDialog({ item, onClose, onUpdated, onMediaCha
   const [isUploading, setIsUploading] = useState(false)
   const [picError, setPicError]       = useState<string | null>(null)
   const ref = useRef<HTMLInputElement>(null)
-  const form = useForm<FV>({ resolver: zodResolver(schema), defaultValues: { stepNumber: 1, procedureText: "", status: "approved" } })
+  const form = useForm<FV>({ resolver: zodResolver(schema) as any, defaultValues: { stepNumber: 1, procedureText: "", status: "approved" } })
   useEffect(() => { if (item) { setLocalMedia(item.media ?? []); setPicError(null); form.reset({ stepNumber: item.stepNumber, procedureText: item.procedureText, status: item.status as typeof EQU_INSP1_STATUSES[number] }); setSubmitError(null) } }, [item]) // eslint-disable-line react-hooks/exhaustive-deps
   async function handleFileAdd(e: React.ChangeEvent<HTMLInputElement>) {
     if (!item) return; const file = e.target.files?.[0]; if (ref.current) ref.current.value = ""; if (!file) return
