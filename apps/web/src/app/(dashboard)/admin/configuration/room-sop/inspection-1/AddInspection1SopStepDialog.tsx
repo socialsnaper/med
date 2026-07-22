@@ -37,7 +37,8 @@ const schema = z.object({
   procedureText:  z.string().min(1, "Procedure is required").max(5000),
 })
 
-type FormValues = z.infer<typeof schema>
+type FormInput  = z.input<typeof schema>
+type FormValues = z.output<typeof schema>
 
 interface Props {
   open:          boolean
@@ -90,7 +91,7 @@ export function AddInspection1SopStepDialog({ open, onClose, onCreated, cleaning
     })
   }
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       cleaningTypeId: defaultTypeId ?? "",

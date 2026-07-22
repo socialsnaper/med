@@ -44,7 +44,8 @@ const schema = z.object({
   isActive:        z.enum(["true", "false"]),
 })
 
-type FormValues = z.infer<typeof schema>
+type FormInput  = z.input<typeof schema>
+type FormValues = z.output<typeof schema>
 
 interface Props {
   item:      RoomTypeItem | null
@@ -56,7 +57,7 @@ export function EditRoomTypeDialog({ item, onClose, onUpdated }: Props) {
   const { getAccessToken } = useAuth()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       roomTypeName:    "",

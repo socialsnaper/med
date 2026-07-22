@@ -158,7 +158,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
     // ── Forward user identity to the page via request headers ──────────────
     const requestHeaders = new Headers(request.headers)
-    requestHeaders.set('x-user-id',       payload.sub)
+    requestHeaders.set('x-user-id',       payload.sub ?? '')
     requestHeaders.set('x-user-role',     payload.roleName)
     requestHeaders.set('x-user-schema',   payload.sid)
 

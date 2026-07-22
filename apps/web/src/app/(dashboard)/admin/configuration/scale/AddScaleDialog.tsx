@@ -42,7 +42,8 @@ const schema = z.object({
   formCalibrationNo:        z.string().max(20).optional(),
 })
 
-type FormValues = z.infer<typeof schema>
+type FormInput  = z.input<typeof schema>
+type FormValues = z.output<typeof schema>
 
 const TYPE_LABELS: Record<string, string> = {
   analytical: "Analytical",
@@ -62,7 +63,7 @@ export function AddScaleDialog({ open, onClose, onCreated }: Props) {
   const { getAccessToken } = useAuth()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       scaleNumber: "", scaleType: undefined,
