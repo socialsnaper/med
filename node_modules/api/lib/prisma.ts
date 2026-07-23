@@ -7,6 +7,11 @@ import { PrismaClient } from '../generated/prisma/client';
  */
 const TENANT_SCHEMA_RE = /^tenant_[a-z0-9_]+$/;
 
+/** SSL config: disable cert verification for RDS self-signed certs in production. */
+const pgOptions = process.env.NODE_ENV === 'production'
+  ? { ssl: { rejectUnauthorized: false } }
+  : undefined;
+
 /** Module-level cache — one PrismaClient per schema, reused across requests. */
 const clientCache = new Map<string, PrismaClient>();
 let _publicClient: PrismaClient | null = null;
@@ -24,7 +29,7 @@ function buildAdapter(schemaName: string): PrismaPg {
       'Add it to apps/api/.env before starting the server.'
     );
   }
-  return new PrismaPg({ connectionString }, { schema: schemaName });
+  return new PrismaPg({ connectionString, ...pgOptions }, { schema: schemaName });
 }
 
 /**
@@ -38,7 +43,7 @@ export function getPublicClient(): PrismaClient {
     throw new Error('DATABASE_URL environment variable is not set.');
   }
   _publicClient = new PrismaClient({
-    adapter: new PrismaPg({ connectionString }, { schema: 'public' }),
+    adapter: new PrismaPg({ connectionString, ...pgOptions }, { schema: 'public' }),
   });
   return _publicClient;
 }
