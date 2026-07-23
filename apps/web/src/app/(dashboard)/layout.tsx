@@ -14,6 +14,8 @@ import {
   ChevronRight,
   Shield,
   Settings,
+  Menu,
+  X,
 } from "lucide-react"
 import { ProtectedLayout } from "./ProtectedLayout"
 import { useState } from "react"
@@ -64,7 +66,7 @@ const NAV_ITEMS: NavItem[] = [
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 
-function Sidebar({ userRole }: { userRole?: string }) {
+function Sidebar({ userRole, onNavigate }: { userRole?: string; onNavigate?: () => void }) {
   const pathname = usePathname()
   const [openGroups, setOpenGroups] = useState<string[]>(["Administration"])
 
@@ -113,6 +115,7 @@ function Sidebar({ userRole }: { userRole?: string }) {
                       <Link
                         key={child.href}
                         href={child.href}
+                        onClick={onNavigate}
                         className={cn(
                           "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
                           isActive
@@ -139,6 +142,7 @@ function Sidebar({ userRole }: { userRole?: string }) {
           <Link
             key={item.label}
             href={item.href!}
+            onClick={onNavigate}
             className={cn(
               "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               isActive
@@ -164,6 +168,7 @@ export default function DashboardLayout({
 }) {
   const { user, logout } = useAuth()
   const router = useRouter()
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   async function handleLogout() {
     await logout()
@@ -177,6 +182,16 @@ export default function DashboardLayout({
         <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
           <div className="flex h-14 items-center justify-between px-4 sm:px-6">
             <div className="flex items-center gap-3">
+              {/* Hamburger — mobile only */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setMobileNavOpen((o) => !o)}
+                aria-label="Toggle menu"
+              >
+                {mobileNavOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+              </Button>
               <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary text-primary-foreground text-sm font-bold">
                 D
               </div>
@@ -206,7 +221,23 @@ export default function DashboardLayout({
 
         {/* ── Body: sidebar + content ──────────────────────────────────────── */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
+          {/* Mobile nav overlay */}
+          {mobileNavOpen && (
+            <div
+              className="fixed inset-0 z-30 md:hidden"
+              onClick={() => setMobileNavOpen(false)}
+            >
+              <div className="absolute inset-0 bg-black/40" />
+              <aside
+                className="absolute left-0 top-0 h-full w-64 bg-background border-r shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Sidebar userRole={user?.role} onNavigate={() => setMobileNavOpen(false)} />
+              </aside>
+            </div>
+          )}
+
+          {/* Desktop sidebar */}
           <aside className="hidden md:flex w-56 shrink-0 flex-col border-r bg-background">
             <Sidebar userRole={user?.role} />
           </aside>
