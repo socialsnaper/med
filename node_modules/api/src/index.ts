@@ -1,7 +1,9 @@
 import path from 'path';
 import dotenv from 'dotenv';
-// Load .env from apps/api/ regardless of which directory the process is started from
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+// __dirname is src/ in dev and dist/src/ in prod — walk up to apps/api/ in both cases
+const envPath = path.resolve(__dirname, '../.env');
+const envPathFallback = path.resolve(__dirname, '../../.env');
+dotenv.config({ path: require('fs').existsSync(envPath) ? envPath : envPathFallback });
 
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
