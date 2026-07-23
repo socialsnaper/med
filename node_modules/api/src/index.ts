@@ -1,9 +1,15 @@
 import path from 'path';
+import fs from 'fs';
 import dotenv from 'dotenv';
-// __dirname is src/ in dev and dist/src/ in prod — walk up to apps/api/ in both cases
-const envPath = path.resolve(__dirname, '../.env');
-const envPathFallback = path.resolve(__dirname, '../../.env');
-dotenv.config({ path: require('fs').existsSync(envPath) ? envPath : envPathFallback });
+// Try multiple candidate paths to find .env regardless of cwd or compiled location
+const candidates = [
+  path.resolve(__dirname, '../.env'),   // dev: src/../.env = apps/api/.env
+  path.resolve(__dirname, '../../.env'), // prod: dist/src/../../.env = apps/api/.env
+  path.resolve(process.cwd(), '.env'),   // fallback: cwd/.env
+];
+const envFile = candidates.find(p => fs.existsSync(p));
+if (envFile) dotenv.config({ path: envFile });
+else console.warn('[dotenv] No .env file found. Tried:', candidates);
 
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
