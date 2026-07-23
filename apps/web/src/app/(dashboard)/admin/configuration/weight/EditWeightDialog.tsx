@@ -25,7 +25,7 @@ import { apiUpdateWeight, type StandardWeightItem, ApiError } from "@/lib/auth/a
 const schema = z.object({
   weightSerialNo:          z.string().min(1, "Serial number is required").max(20),
   standardWeight:          z.string().min(1, "Standard weight is required").max(20),
-  weightValueGrams:        z.coerce.number({ invalid_type_error: "Must be a number" }).positive("Must be positive"),
+  weightValueGrams:        z.coerce.number({ error: "Must be a number" }).positive("Must be positive"),
   lastCalibratedOn:        z.string().optional(),
   nextCalibrationDue:      z.string().optional(),
   calibrationIntervalDays: z.coerce.number().int().min(1),
