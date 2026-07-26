@@ -1667,6 +1667,199 @@ export function apiDeleteRoomQacSopStep(accessToken: string, id: string): Promis
   return apiFetch<null>(`/api/room-qac-sop-steps/${id}`, { method: "DELETE", token: accessToken })
 }
 
+// ── Rooms ─────────────────────────────────────────────────────────────────────
+
+export interface RoomItem {
+  id:           string
+  roomId:       string      // RM-001 display code
+  roomName:     string
+  roomTypeId:   string | null
+  roomTypeName: string | null  // joined from room_types
+  floor:        string | null
+  building:     string | null
+  roomDetails:  string | null
+  status:       string      // active | under_maintenance | under_cleaning | quarantined | decommissioned
+  statusReason: string | null
+  isActive:     boolean
+  createdAt:    string
+  updatedAt:    string
+}
+
+export function apiListRooms(
+  accessToken: string,
+  search?: string,
+  activeOnly?: boolean,
+): Promise<RoomItem[]> {
+  const p = new URLSearchParams()
+  if (search)               p.set("search", search)
+  if (activeOnly === false) p.set("active", "false")
+  const qs = p.toString()
+  return apiGet<RoomItem[]>(`/api/rooms${qs ? "?" + qs : ""}`, accessToken)
+}
+
+export interface CreateRoomPayload {
+  roomName:    string
+  roomTypeId?: string
+  floor?:      string
+  building?:   string
+  roomDetails?: string
+  isActive?:   boolean
+}
+
+export interface UpdateRoomPayload {
+  roomName?:    string
+  roomTypeId?:  string | null
+  floor?:       string | null
+  building?:    string | null
+  roomDetails?: string | null
+  isActive?:    boolean
+}
+
+export function apiCreateRoom(
+  accessToken: string,
+  payload:     CreateRoomPayload,
+): Promise<RoomItem> {
+  return apiPost<RoomItem>("/api/rooms", payload, accessToken)
+}
+
+export function apiUpdateRoom(
+  accessToken: string,
+  id:          string,
+  payload:     UpdateRoomPayload,
+): Promise<RoomItem> {
+  return apiFetch<RoomItem>(`/api/rooms/${id}`, {
+    method: "PATCH",
+    body:   JSON.stringify(payload),
+    token:  accessToken,
+  })
+}
+
+export function apiDeleteRoom(
+  accessToken: string,
+  id:          string,
+): Promise<null> {
+  return apiFetch<null>(`/api/rooms/${id}`, { method: "DELETE", token: accessToken })
+}
+
+// ── Room Maintenance ──────────────────────────────────────────────────────────
+
+export interface MaintenanceTypeItem {
+  id:                     string
+  maintenanceTypeCode:    string
+  maintenanceTypeName:    string
+  maintenanceTypeDetails: string | null
+  displayOrder:           number
+  isActive:               boolean
+}
+
+export type MaintenanceStatus     = "scheduled" | "active" | "stopped" | "cancelled"
+export type AuthorizationStatus   = "pending" | "approved" | "rejected" | "not_required"
+
+export interface MaintenanceLogItem {
+  id:                       string
+  slid:                     number
+  roomId:                   string
+  roomName:                 string
+  roomCode:                 string   // RM-001 display code
+  roomTypeName:             string | null
+  floor:                    string | null
+  building:                 string | null
+  maintenanceTypeId:        string
+  maintenanceTypeName:      string
+  maintenanceStartDatetime: string
+  maintenanceEndDatetime:   string | null
+  durationMinutes:          number | null
+  reasonForMaintenance:     string
+  status:                   MaintenanceStatus
+  markedBy:                 string
+  markedByName:             string
+  stoppedBy:                string | null
+  stoppedByName:            string | null
+  stoppedAt:                string | null
+  completionRemarks:        string | null
+  authorizedBy:             string | null
+  authorizedByName:         string | null
+  authorizedAt:             string | null
+  authorizationRemarks:     string | null
+  authorizationStatus:      AuthorizationStatus
+  createdAt:                string
+  updatedAt:                string
+}
+
+export interface CreateMaintenancePayload {
+  roomId:                   string
+  maintenanceTypeId:        string
+  maintenanceStartDatetime: string   // ISO 8601
+  reasonForMaintenance:     string
+}
+
+export interface StopMaintenancePayload {
+  completionRemarks?: string
+}
+
+export interface ApproveMaintenancePayload {
+  authorizationRemarks?: string
+}
+
+export interface RejectMaintenancePayload {
+  authorizationRemarks: string
+}
+
+export function apiListMaintenanceTypes(
+  accessToken: string,
+): Promise<MaintenanceTypeItem[]> {
+  return apiGet<MaintenanceTypeItem[]>("/api/room-maintenance/types", accessToken)
+}
+
+export function apiListMaintenanceLogs(
+  accessToken: string,
+  filters?: { status?: string; roomId?: string },
+): Promise<MaintenanceLogItem[]> {
+  const p = new URLSearchParams()
+  if (filters?.status) p.set("status", filters.status)
+  if (filters?.roomId) p.set("roomId", filters.roomId)
+  const qs = p.toString()
+  return apiGet<MaintenanceLogItem[]>(`/api/room-maintenance${qs ? "?" + qs : ""}`, accessToken)
+}
+
+export function apiGetMaintenanceLog(
+  accessToken: string,
+  id:          string,
+): Promise<MaintenanceLogItem> {
+  return apiGet<MaintenanceLogItem>(`/api/room-maintenance/${id}`, accessToken)
+}
+
+export function apiCreateMaintenance(
+  accessToken: string,
+  payload:     CreateMaintenancePayload,
+): Promise<MaintenanceLogItem> {
+  return apiPost<MaintenanceLogItem>("/api/room-maintenance", payload, accessToken)
+}
+
+export function apiStopMaintenance(
+  accessToken: string,
+  id:          string,
+  payload?:    StopMaintenancePayload,
+): Promise<MaintenanceLogItem> {
+  return apiPost<MaintenanceLogItem>(`/api/room-maintenance/${id}/stop`, payload ?? {}, accessToken)
+}
+
+export function apiApproveMaintenance(
+  accessToken: string,
+  id:          string,
+  payload?:    ApproveMaintenancePayload,
+): Promise<MaintenanceLogItem> {
+  return apiPost<MaintenanceLogItem>(`/api/room-maintenance/${id}/approve`, payload ?? {}, accessToken)
+}
+
+export function apiRejectMaintenance(
+  accessToken: string,
+  id:          string,
+  payload:     RejectMaintenancePayload,
+): Promise<MaintenanceLogItem> {
+  return apiPost<MaintenanceLogItem>(`/api/room-maintenance/${id}/reject`, payload, accessToken)
+}
+
 export async function apiExportRoomQacSopSteps(
   accessToken: string, cleaningTypeId?: string,
 ): Promise<Blob> {

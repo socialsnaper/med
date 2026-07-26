@@ -37,6 +37,8 @@ import { equInspection1SopStepsRouter } from './routes/equ-inspection1-sop-steps
 import { equInspection2SopStepsRouter } from './routes/equ-inspection2-sop-steps.routes';
 import { equQacSopStepsRouter }         from './routes/equ-qac-sop-steps.routes';
 import { uploadsRouter }                from './routes/uploads.routes';
+import { roomsRouter }                 from './routes/rooms.routes';
+import { roomMaintenanceRouter }       from './routes/room-maintenance.routes';
 import { AuthError }               from './services/auth.service';
 import { UserError }               from './services/users.service';
 import { RoomTypeError }           from './services/room-types.service';
@@ -55,6 +57,8 @@ import { EquCleaningSopStepError }     from './services/equ-cleaning-sop-steps.s
 import { EquInsp1SopStepError }        from './services/equ-inspection1-sop-steps.service';
 import { EquInsp2SopStepError }        from './services/equ-inspection2-sop-steps.service';
 import { EquQacSopStepError }          from './services/equ-qac-sop-steps.service';
+import { RoomError }                   from './services/rooms.service';
+import { RoomMaintenanceError }        from './services/room-maintenance.service';
 import { disconnectAll } from '../lib/prisma';
 
 // ── App ───────────────────────────────────────────────────────────────────────
@@ -99,6 +103,8 @@ app.use('/api/equ-cleaning-sop-steps',    equCleaningSopStepsRouter);
 app.use('/api/equ-inspection1-sop-steps', equInspection1SopStepsRouter);
 app.use('/api/equ-inspection2-sop-steps', equInspection2SopStepsRouter);
 app.use('/api/equ-qac-sop-steps',         equQacSopStepsRouter);
+app.use('/api/rooms',             roomsRouter);
+app.use('/api/room-maintenance',  roomMaintenanceRouter);
 
 // ── Uploads: static serving + file-upload endpoint ───────────────────────────
 // Static MUST come before the upload router so GET requests are served directly
@@ -115,7 +121,7 @@ app.use((_req: Request, res: Response) => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  if (err instanceof AuthError || err instanceof UserError || err instanceof RoomTypeError || err instanceof ProcessTypeError || err instanceof CleaningEquipmentError || err instanceof PackagingTypeError || err instanceof FunctionTypeError || err instanceof ScaleError || err instanceof WeightError || err instanceof RoomCleaningTypeError || err instanceof RoomCleaningSopStepError || err instanceof RoomInspection1SopStepError || err instanceof RoomInspection2SopStepError || err instanceof RoomQacSopStepError || err instanceof EquCleaningSopStepError || err instanceof EquInsp1SopStepError || err instanceof EquInsp2SopStepError || err instanceof EquQacSopStepError) {
+  if (err instanceof AuthError || err instanceof UserError || err instanceof RoomTypeError || err instanceof ProcessTypeError || err instanceof CleaningEquipmentError || err instanceof PackagingTypeError || err instanceof FunctionTypeError || err instanceof ScaleError || err instanceof WeightError || err instanceof RoomCleaningTypeError || err instanceof RoomCleaningSopStepError || err instanceof RoomInspection1SopStepError || err instanceof RoomInspection2SopStepError || err instanceof RoomQacSopStepError || err instanceof EquCleaningSopStepError || err instanceof EquInsp1SopStepError || err instanceof EquInsp2SopStepError || err instanceof EquQacSopStepError || err instanceof RoomError || err instanceof RoomMaintenanceError) {
     return res.status(err.statusCode).json({
       success: false,
       error:   err.code,

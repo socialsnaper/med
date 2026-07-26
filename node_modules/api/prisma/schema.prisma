@@ -127,6 +127,17 @@ model User {
   updatedStandardWeights         StandardWeight[] @relation("StandardWeightUpdatedBy")
   createdScales                  Scale[] @relation("ScaleCreatedBy")
   updatedScales                  Scale[] @relation("ScaleUpdatedBy")
+  createdRooms                   Room[]               @relation("RoomCreatedBy")
+  updatedRooms                   Room[]               @relation("RoomUpdatedBy")
+  createdRoomMaintTypes          RoomMaintenanceType[] @relation("RoomMaintTypeCreatedBy")
+  updatedRoomMaintTypes          RoomMaintenanceType[] @relation("RoomMaintTypeUpdatedBy")
+  markedMaintenanceLogs          RoomMaintenanceLog[]  @relation("MaintLogMarkedBy")
+  stoppedMaintenanceLogs         RoomMaintenanceLog[]  @relation("MaintLogStoppedBy")
+  authorizedMaintenanceLogs      RoomMaintenanceLog[]  @relation("MaintLogAuthorizedBy")
+  createdMaintenanceLogs         RoomMaintenanceLog[]  @relation("MaintLogCreatedBy")
+  updatedMaintenanceLogs         RoomMaintenanceLog[]  @relation("MaintLogUpdatedBy")
+  performedMaintAudits           RoomMaintenanceAudit[] @relation("MaintAuditPerformedBy")
+  authorizedMaintAudits          RoomMaintenanceAudit[] @relation("MaintAuditAuthorizedBy")
 
   @@index([username])
   @@index([isActive])
@@ -216,6 +227,7 @@ model RoomType {
 
   createdByUser User? @relation("RoomTypeCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   updatedByUser User? @relation("RoomTypeUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  rooms         Room[]
 
   @@index([isActive])
   @@index([displayOrder])
@@ -801,5 +813,147 @@ model Scale {
   @@index([nextVerificationDue])
   @@index([nextCalibrationDue])
   @@map("scales")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROOM MODULE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Room master — every physical room in the facility.
+/// status controls availability across all modules (maintenance, cleaning, batching).
+model Room {
+  id                      String    @id @default(uuid()) @db.Uuid
+  /// Human-readable code: RM-001, RM-002 …
+  roomId                  String    @unique @map("room_id") @db.VarChar(20)
+  roomName                String    @unique @map("room_name") @db.VarChar(150)
+  roomTypeId              String?   @map("room_type_id") @db.Uuid
+  floor                   String?   @map("floor") @db.VarChar(50)
+  building                String?   @map("building") @db.VarChar(100)
+  roomDetails             String?   @map("room_details")
+  /// active | under_maintenance | under_cleaning | quarantined | decommissioned
+  status                  String    @default("active") @map("status") @db.VarChar(20)
+  statusReason            String?   @map("status_reason")
+  /// FK to the currently active RoomMaintenanceLog. NULL = no active maintenance.
+  currentMaintenanceLogId String?   @unique @map("current_maintenance_log_id") @db.Uuid
+  isActive                Boolean   @default(true) @map("is_active")
+  createdBy               String?   @map("created_by") @db.Uuid
+  updatedBy               String?   @map("updated_by") @db.Uuid
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser      User?               @relation("RoomCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser      User?               @relation("RoomUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  roomType           RoomType?            @relation(fields: [roomTypeId], references: [id], onDelete: SetNull)
+  maintenanceLogs    RoomMaintenanceLog[] @relation("RoomMaintenanceLogs")
+  /// Short-cut pointer to the active maintenance log (updated atomically with status).
+  currentMaintenance RoomMaintenanceLog?  @relation("CurrentMaintenance", fields: [currentMaintenanceLogId], references: [id])
+
+  @@index([isActive])
+  @@index([status])
+  @@map("rooms")
+}
+
+/// Master list of room maintenance types. AC4: Preventive or Break Down.
+model RoomMaintenanceType {
+  id                     String   @id @default(uuid()) @db.Uuid
+  /// MT-001, MT-002 …
+  maintenanceTypeCode    String   @unique @map("maintenance_type_code") @db.VarChar(20)
+  maintenanceTypeName    String   @unique @map("maintenance_type_name") @db.VarChar(150)
+  maintenanceTypeDetails String?  @map("maintenance_type_details")
+  displayOrder           Int      @default(0) @map("display_order")
+  isActive               Boolean  @default(true) @map("is_active")
+  createdBy              String?  @map("created_by") @db.Uuid
+  updatedBy              String?  @map("updated_by") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser   User?                @relation("RoomMaintTypeCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser   User?                @relation("RoomMaintTypeUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  maintenanceLogs RoomMaintenanceLog[]
+
+  @@index([isActive])
+  @@index([displayOrder])
+  @@map("room_maintenance_types")
+}
+
+/// One row = one maintenance period for one room.
+/// When status='active', the room is blocked from all use (AC2).
+/// Stop action sets status='completed' and restores room availability (AC7/AC8).
+model RoomMaintenanceLog {
+  id                      String    @id @default(uuid()) @db.Uuid
+  /// Global sequential display number
+  slid                    Int       @default(autoincrement()) @map("slid")
+  roomId                  String    @map("room_id") @db.Uuid
+  maintenanceTypeId       String    @map("maintenance_type_id") @db.Uuid
+  maintenanceStartDatetime DateTime @map("maintenance_start_datetime") @db.Timestamptz(6)
+  maintenanceEndDatetime  DateTime? @map("maintenance_end_datetime") @db.Timestamptz(6)
+  /// Computed on Stop: duration in minutes
+  durationMinutes         Int?      @map("duration_minutes")
+  reasonForMaintenance    String    @map("reason_for_maintenance")
+  /// scheduled | active | completed | cancelled
+  status                  String    @default("active") @map("status") @db.VarChar(20)
+  /// AC5: user who marked the room for maintenance
+  markedBy                String    @map("marked_by") @db.Uuid
+  stoppedBy               String?   @map("stopped_by") @db.Uuid
+  stoppedAt               DateTime? @map("stopped_at") @db.Timestamptz(6)
+  completionRemarks       String?   @map("completion_remarks")
+  authorizedBy            String?   @map("authorized_by") @db.Uuid
+  authorizedAt            DateTime? @map("authorized_at") @db.Timestamptz(6)
+  authorizationRemarks    String?   @map("authorization_remarks")
+  /// pending | approved | rejected
+  authorizationStatus     String    @default("pending") @map("authorization_status") @db.VarChar(20)
+  createdBy               String?   @map("created_by") @db.Uuid
+  updatedBy               String?   @map("updated_by") @db.Uuid
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  room             Room                @relation("RoomMaintenanceLogs", fields: [roomId], references: [id], onDelete: Restrict)
+  maintenanceType  RoomMaintenanceType @relation(fields: [maintenanceTypeId], references: [id], onDelete: Restrict)
+  markedByUser     User                @relation("MaintLogMarkedBy", fields: [markedBy], references: [id], onDelete: Restrict)
+  stoppedByUser    User?               @relation("MaintLogStoppedBy", fields: [stoppedBy], references: [id], onDelete: SetNull)
+  authorizedByUser User?               @relation("MaintLogAuthorizedBy", fields: [authorizedBy], references: [id], onDelete: SetNull)
+  createdByUser    User?               @relation("MaintLogCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser    User?               @relation("MaintLogUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  auditEntries     RoomMaintenanceAudit[]
+  /// Inverse side of Room.currentMaintenance shortcut
+  currentForRoom   Room?               @relation("CurrentMaintenance")
+
+  @@index([roomId, maintenanceStartDatetime(sort: Desc)])
+  @@index([status])
+  @@index([authorizationStatus])
+  @@map("room_maintenance_logs")
+}
+
+/// Append-only audit trail for every maintenance action. GMP requirement.
+model RoomMaintenanceAudit {
+  id                   BigInt   @id @default(autoincrement())
+  maintenanceLogId     String?  @map("maintenance_log_id") @db.Uuid
+  roomIdSnapshot       String?  @map("room_id_snapshot") @db.Uuid
+  roomNameSnapshot     String?  @map("room_name_snapshot") @db.VarChar(150)
+  roomIdCodeSnapshot   String?  @map("room_id_code_snapshot") @db.VarChar(20)
+  /// CREATE | UPDATE | STOP | CANCEL | APPROVE | REJECT
+  action               String   @map("action") @db.VarChar(30)
+  beforeState          Json?    @map("before_state")
+  afterState           Json?    @map("after_state")
+  changedFields        String[] @map("changed_fields")
+  performedBy          String?  @map("performed_by") @db.Uuid
+  performedByUsername  String?  @map("performed_by_username") @db.VarChar(100)
+  performedByRole      String?  @map("performed_by_role") @db.VarChar(100)
+  authorizedBy         String?  @map("authorized_by") @db.Uuid
+  authorizedByUsername String?  @map("authorized_by_username") @db.VarChar(100)
+  authorizedByRole     String?  @map("authorized_by_role") @db.VarChar(100)
+  authorizationStatus  String?  @map("authorization_status") @db.VarChar(20)
+  remarks              String?  @map("remarks")
+  ipAddress            String?  @map("ip_address")
+  userAgent            String?  @map("user_agent")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  maintenanceLog   RoomMaintenanceLog? @relation(fields: [maintenanceLogId], references: [id], onDelete: SetNull)
+  performedByUser  User?               @relation("MaintAuditPerformedBy", fields: [performedBy], references: [id], onDelete: SetNull)
+  authorizedByUser User?               @relation("MaintAuditAuthorizedBy", fields: [authorizedBy], references: [id], onDelete: SetNull)
+
+  @@index([maintenanceLogId, createdAt(sort: Desc)])
+  @@index([performedBy, createdAt(sort: Desc)])
+  @@map("room_maintenance_audit")
 }
 

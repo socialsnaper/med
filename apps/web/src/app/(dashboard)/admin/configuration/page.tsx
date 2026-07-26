@@ -108,6 +108,12 @@ const CONFIG_ITEMS = [
   },
   // { label: "Room Details", icon: Building, href: "/admin/configuration/room-details", color: "bg-amber-500/10 text-amber-600" },
   {
+    label: "Room Details",
+    icon: Building,
+    href: "/admin/configuration/room-details",
+    color: "bg-amber-500/10 text-amber-600",
+  },
+  {
     label: "SOP Approval",
     icon: BadgeCheck,
     href: "/admin/configuration/sop-approval",

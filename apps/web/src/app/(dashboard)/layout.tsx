@@ -16,6 +16,7 @@ import {
   Settings,
   Menu,
   X,
+  DoorOpen,
 } from "lucide-react"
 import { ProtectedLayout } from "./ProtectedLayout"
 import { useState } from "react"
@@ -62,13 +63,21 @@ const NAV_ITEMS: NavItem[] = [
     href:  "/quality",
     icon:  ClipboardCheck,
   },
+  {
+    label: "Room",
+    icon:  DoorOpen,
+    children: [
+      { label: "Maintenance", href: "/room/maintenance" },
+      { label: "Cleaning", href: "/room/cleaning" },
+    ],
+  },
 ]
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 
 function Sidebar({ userRole, onNavigate }: { userRole?: string; onNavigate?: () => void }) {
   const pathname = usePathname()
-  const [openGroups, setOpenGroups] = useState<string[]>(["Administration"])
+  const [openGroups, setOpenGroups] = useState<string[]>(["Administration", "Room"])
 
   function toggleGroup(label: string) {
     setOpenGroups((prev) =>

@@ -22,6 +22,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/admin':       ['users', 'audit', 'config'],
   '/quality':     ['quality'],
   '/operations':  ['batch', 'rooms'],
+  '/room':        ['batch', 'rooms'],
   '/maintenance': ['equipment'],
   '/warehouse':   ['inventory'],
   '/data':        ['config'],
