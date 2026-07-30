@@ -21,6 +21,7 @@ import {
 import { ProtectedLayout } from "./ProtectedLayout"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { NotificationBell } from "@/components/NotificationBell"
 
 // ── Nav item types ─────────────────────────────────────────────────────────────
 
@@ -216,6 +217,7 @@ export default function DashboardLayout({
                   <p className="text-xs text-muted-foreground mt-0.5">{user.role}</p>
                 </div>
               )}
+              <NotificationBell />
               <Button
                 variant="ghost"
                 size="icon"

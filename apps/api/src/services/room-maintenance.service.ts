@@ -133,12 +133,25 @@ export async function listMaintenanceTypes(schemaName: string): Promise<Maintena
 
 export async function listMaintenanceLogs(
   schemaName: string,
-  opts?: { status?: string; roomId?: string },
+  opts?: { status?: string; roomId?: string; userRole?: string },
 ): Promise<MaintenanceLogItem[]> {
   const db = getPrismaClient(schemaName);
+
+  // Cleaning Operator only sees records that are approved+scheduled, in-progress, or completed.
+  // Pending records (awaiting System Administrator approval) are hidden from them.
+  const roleFilter = opts?.userRole === 'Cleaning Operator'
+    ? {
+        OR: [
+          { authorizationStatus: 'approved', status: { in: ['scheduled', 'active'] as string[] } },
+          { status: 'stopped' as string, authorizationStatus: 'approved' },
+        ],
+      }
+    : {};
+
   const rows = await db.roomMaintenanceLog.findMany({
     select: LOG_SELECT,
     where: {
+      ...roleFilter,
       ...(opts?.status ? { status: opts.status } : {}),
       ...(opts?.roomId ? { roomId: opts.roomId } : {}),
     },
@@ -164,6 +177,15 @@ export async function createMaintenance(
   userUsername: string,
   ipAddress?: string,
 ): Promise<MaintenanceLogItem> {
+  // Role restriction: only User Admin may create maintenance records
+  if (userRole !== 'User Admin') {
+    throw new RoomMaintenanceError(
+      'Only users with the "User Admin" role can create maintenance records.',
+      403,
+      'FORBIDDEN_ROLE',
+    );
+  }
+
   const db = getPrismaClient(schemaName);
 
   // Validation: room must exist and be active
@@ -209,10 +231,10 @@ export async function createMaintenance(
   if (!maintType) throw new RoomMaintenanceError('Maintenance type not found', 404, 'MAINT_TYPE_NOT_FOUND');
 
   const startDt = new Date(dto.maintenanceStartDatetime);
-  const isImmediate = startDt <= new Date();
-  const logStatus   = isImmediate ? 'active' : 'scheduled';
 
-  // Create maintenance log + update room status in a transaction
+  // Create maintenance log + block room in a transaction.
+  // Status is always 'scheduled' on creation — Cleaning Operator starts it after approval.
+  // Room is blocked immediately regardless of start time.
   const result = await db.$transaction(async (tx) => {
     const log = await tx.roomMaintenanceLog.create({
       select: LOG_SELECT,
@@ -221,7 +243,7 @@ export async function createMaintenance(
         maintenanceTypeId:       dto.maintenanceTypeId,
         maintenanceStartDatetime: startDt,
         reasonForMaintenance:    dto.reasonForMaintenance,
-        status:                  logStatus,
+        status:                  'scheduled',
         markedBy:                userId,
         authorizationStatus:     'pending',
         createdBy:               userId,
@@ -229,18 +251,16 @@ export async function createMaintenance(
       },
     });
 
-    // If starting immediately, block the room
-    if (isImmediate) {
-      await tx.room.update({
-        where: { id: dto.roomId },
-        data: {
-          status:                 'under_maintenance',
-          statusReason:           `Maintenance started: ${dto.reasonForMaintenance}`,
-          currentMaintenanceLogId: log.id,
-          updatedBy:              userId,
-        },
-      });
-    }
+    // Block the room immediately
+    await tx.room.update({
+      where: { id: dto.roomId },
+      data: {
+        status:                 'under_maintenance',
+        statusReason:           `Maintenance requested: ${dto.reasonForMaintenance}`,
+        currentMaintenanceLogId: log.id,
+        updatedBy:              userId,
+      },
+    });
 
     // Audit trail
     await tx.roomMaintenanceAudit.create({
@@ -263,6 +283,107 @@ export async function createMaintenance(
     return log;
   });
 
+  // ── Notify System Administrators (outside transaction — notification failure must not roll back maintenance) ──
+  try {
+    const sysAdmins = await db.user.findMany({
+      where: { isActive: true, role: { roleName: 'System Administrator' } },
+      select: { id: true },
+    });
+    if (sysAdmins.length > 0) {
+      await db.inAppNotification.createMany({
+        data: sysAdmins.map((u) => ({
+          recipientId: u.id,
+          title:       'Room Maintenance Request',
+          message:     `${userUsername} has requested maintenance for room "${room.roomName}". Please review and approve or reject.`,
+          type:        'maintenance_created',
+          relatedId:   result.id,
+        })),
+      });
+    }
+  } catch (notifErr) {
+    // Log but do not propagate — maintenance record was already committed
+    console.error('[Notification] Failed to notify System Administrators:', notifErr);
+  }
+
+  return mapLog(result);
+}
+
+// ── Start maintenance (Cleaning Operator) ─────────────────────────────────────
+
+export async function startMaintenance(
+  id:           string,
+  schemaName:   string,
+  userId:       string,
+  userRole:     string,
+  userUsername: string,
+  ipAddress?:   string,
+): Promise<MaintenanceLogItem> {
+  // Role restriction: only Cleaning Operator may start maintenance
+  if (userRole !== 'Cleaning Operator') {
+    throw new RoomMaintenanceError(
+      'Only users with the "Cleaning Operator" role can start maintenance.',
+      403,
+      'FORBIDDEN_ROLE',
+    );
+  }
+
+  const db = getPrismaClient(schemaName);
+
+  const log = await db.roomMaintenanceLog.findUnique({
+    select: { id: true, status: true, authorizationStatus: true, roomId: true },
+    where:  { id },
+  });
+  if (!log) throw new RoomMaintenanceError('Maintenance record not found', 404, 'NOT_FOUND');
+  if (log.authorizationStatus !== 'approved') {
+    throw new RoomMaintenanceError(
+      'Maintenance has not been approved yet. Awaiting System Administrator approval.',
+      409,
+      'NOT_APPROVED',
+    );
+  }
+  if (log.status !== 'scheduled') {
+    throw new RoomMaintenanceError(
+      `Cannot start maintenance — current status is "${log.status}"`,
+      409,
+      'INVALID_STATUS_TRANSITION',
+    );
+  }
+
+  const now = new Date();
+
+  const result = await db.$transaction(async (tx) => {
+    const before = await tx.roomMaintenanceLog.findUnique({ select: LOG_SELECT, where: { id } });
+
+    const updated = await tx.roomMaintenanceLog.update({
+      select: LOG_SELECT,
+      where:  { id },
+      data: {
+        status:                  'active',
+        maintenanceStartDatetime: now,
+        updatedBy:               userId,
+      },
+    });
+
+    await tx.roomMaintenanceAudit.create({
+      data: {
+        maintenanceLogId:    id,
+        roomIdSnapshot:      updated.room.id,
+        roomNameSnapshot:    updated.room.roomName,
+        roomIdCodeSnapshot:  updated.room.roomId,
+        action:              'UPDATE',
+        beforeState:         before as object,
+        afterState:          updated as object,
+        changedFields:       ['status', 'maintenance_start_datetime'],
+        performedBy:         userId,
+        performedByUsername: userUsername,
+        performedByRole:     userRole,
+        ipAddress,
+      },
+    });
+
+    return updated;
+  });
+
   return mapLog(result);
 }
 
@@ -277,6 +398,15 @@ export async function stopMaintenance(
   userUsername: string,
   ipAddress?:   string,
 ): Promise<MaintenanceLogItem> {
+  // Role restriction: only Cleaning Operator may stop maintenance
+  if (userRole !== 'Cleaning Operator') {
+    throw new RoomMaintenanceError(
+      'Only users with the "Cleaning Operator" role can stop maintenance.',
+      403,
+      'FORBIDDEN_ROLE',
+    );
+  }
+
   const db = getPrismaClient(schemaName);
 
   const log = await db.roomMaintenanceLog.findUnique({
@@ -345,6 +475,28 @@ export async function stopMaintenance(
     return updated;
   });
 
+  // ── Notify User Admins that work is complete (outside transaction) ──
+  try {
+    const roomName = result.room.roomName;
+    const userAdmins = await db.user.findMany({
+      where: { isActive: true, role: { roleName: 'User Admin' } },
+      select: { id: true },
+    });
+    if (userAdmins.length > 0) {
+      await db.inAppNotification.createMany({
+        data: userAdmins.map((u) => ({
+          recipientId: u.id,
+          title:       'Maintenance Work Completed',
+          message:     `Cleaning Operator ${userUsername} has completed maintenance on room "${roomName}". The room is now active.`,
+          type:        'maintenance_completed',
+          relatedId:   id,
+        })),
+      });
+    }
+  } catch (notifErr) {
+    console.error('[Notification] Failed to notify User Admins:', notifErr);
+  }
+
   return mapLog(result);
 }
 
@@ -359,6 +511,15 @@ export async function approveMaintenance(
   userUsername: string,
   ipAddress?:   string,
 ): Promise<MaintenanceLogItem> {
+  // Role restriction: only System Administrator may approve maintenance
+  if (userRole !== 'System Administrator') {
+    throw new RoomMaintenanceError(
+      'Only users with the "System Administrator" role can approve maintenance requests.',
+      403,
+      'FORBIDDEN_ROLE',
+    );
+  }
+
   const db = getPrismaClient(schemaName);
 
   const log = await db.roomMaintenanceLog.findUnique({
@@ -371,13 +532,6 @@ export async function approveMaintenance(
       `Cannot approve — authorization status is already "${log.authorizationStatus}"`,
       409,
       'INVALID_AUTH_TRANSITION',
-    );
-  }
-  if (log.markedBy === userId) {
-    throw new RoomMaintenanceError(
-      'A user cannot authorize their own maintenance request.',
-      403,
-      'SELF_AUTHORIZATION',
     );
   }
 
@@ -437,6 +591,15 @@ export async function rejectMaintenance(
   userUsername: string,
   ipAddress?:   string,
 ): Promise<MaintenanceLogItem> {
+  // Role restriction: only System Administrator may reject maintenance
+  if (userRole !== 'System Administrator') {
+    throw new RoomMaintenanceError(
+      'Only users with the "System Administrator" role can reject maintenance requests.',
+      403,
+      'FORBIDDEN_ROLE',
+    );
+  }
+
   const db = getPrismaClient(schemaName);
 
   const log = await db.roomMaintenanceLog.findUnique({
@@ -449,13 +612,6 @@ export async function rejectMaintenance(
       `Cannot reject — authorization status is already "${log.authorizationStatus}"`,
       409,
       'INVALID_AUTH_TRANSITION',
-    );
-  }
-  if (log.markedBy === userId) {
-    throw new RoomMaintenanceError(
-      'A user cannot reject their own maintenance request.',
-      403,
-      'SELF_AUTHORIZATION',
     );
   }
 
@@ -477,13 +633,11 @@ export async function rejectMaintenance(
       },
     });
 
-    // If the room was blocked, restore it
-    if (log.status === 'active') {
-      await tx.room.update({
-        where: { id: log.roomId },
-        data:  { status: 'active', statusReason: null, currentMaintenanceLogId: null, updatedBy: userId },
-      });
-    }
+    // Always restore room to active when rejected (room was blocked at create time)
+    await tx.room.update({
+      where: { id: log.roomId },
+      data:  { status: 'active', statusReason: null, currentMaintenanceLogId: null, updatedBy: userId },
+    });
 
     await tx.roomMaintenanceAudit.create({
       data: {

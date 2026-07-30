@@ -35,7 +35,11 @@ export async function listMaintenanceLogsController(
   try {
     const status = typeof req.query.status === 'string' ? req.query.status : undefined;
     const roomId = typeof req.query.roomId === 'string' ? req.query.roomId : undefined;
-    const data   = await maintService.listMaintenanceLogs(req.user!.schemaName, { status, roomId });
+    const data   = await maintService.listMaintenanceLogs(req.user!.schemaName, {
+      status,
+      roomId,
+      userRole: req.user!.roleName,
+    });
     res.json({ success: true, data });
   } catch (err) { next(err); }
 }
@@ -65,6 +69,23 @@ export async function createMaintenanceController(
       ip(req),
     );
     res.status(201).json({ success: true, data });
+  } catch (err) { next(err); }
+}
+
+// POST /api/room-maintenance/:id/start
+export async function startMaintenanceController(
+  req: Request, res: Response, next: NextFunction,
+): Promise<void> {
+  try {
+    const data = await maintService.startMaintenance(
+      param(req, 'id'),
+      req.user!.schemaName,
+      req.user!.id,
+      req.user!.roleName,
+      (req.user as any).username ?? req.user!.id,
+      ip(req),
+    );
+    res.json({ success: true, data });
   } catch (err) { next(err); }
 }
 

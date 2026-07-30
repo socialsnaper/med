@@ -1860,6 +1860,52 @@ export function apiRejectMaintenance(
   return apiPost<MaintenanceLogItem>(`/api/room-maintenance/${id}/reject`, payload, accessToken)
 }
 
+export function apiStartMaintenance(
+  accessToken: string,
+  id:          string,
+): Promise<MaintenanceLogItem> {
+  return apiPost<MaintenanceLogItem>(`/api/room-maintenance/${id}/start`, {}, accessToken)
+}
+
+// ── In-App Notifications ──────────────────────────────────────────────────────
+
+export interface NotificationItem {
+  id:        string
+  title:     string
+  message:   string
+  type:      string
+  relatedId: string | null
+  isRead:    boolean
+  createdAt: string
+}
+
+export function apiListNotifications(
+  accessToken: string,
+  unreadOnly?: boolean,
+): Promise<NotificationItem[]> {
+  const qs = unreadOnly ? "?unread=true" : ""
+  return apiGet<NotificationItem[]>(`/api/notifications${qs}`, accessToken)
+}
+
+export function apiGetUnreadNotificationCount(
+  accessToken: string,
+): Promise<{ count: number }> {
+  return apiGet<{ count: number }>("/api/notifications/unread-count", accessToken)
+}
+
+export function apiMarkNotificationRead(
+  accessToken: string,
+  id:          string,
+): Promise<void> {
+  return apiPost<void>(`/api/notifications/${id}/read`, {}, accessToken)
+}
+
+export function apiMarkAllNotificationsRead(
+  accessToken: string,
+): Promise<void> {
+  return apiPost<void>("/api/notifications/read-all", {}, accessToken)
+}
+
 export async function apiExportRoomQacSopSteps(
   accessToken: string, cleaningTypeId?: string,
 ): Promise<Blob> {

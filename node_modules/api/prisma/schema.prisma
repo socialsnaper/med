@@ -138,6 +138,7 @@ model User {
   updatedMaintenanceLogs         RoomMaintenanceLog[]  @relation("MaintLogUpdatedBy")
   performedMaintAudits           RoomMaintenanceAudit[] @relation("MaintAuditPerformedBy")
   authorizedMaintAudits          RoomMaintenanceAudit[] @relation("MaintAuditAuthorizedBy")
+  notifications                  InAppNotification[]    @relation("NotificationRecipient")
 
   @@index([username])
   @@index([isActive])
@@ -955,5 +956,24 @@ model RoomMaintenanceAudit {
   @@index([maintenanceLogId, createdAt(sort: Desc)])
   @@index([performedBy, createdAt(sort: Desc)])
   @@map("room_maintenance_audit")
+}
+
+/// In-app notifications for role-based workflow alerts (e.g., maintenance approvals).
+model InAppNotification {
+  id          String   @id @default(uuid()) @db.Uuid
+  recipientId String   @map("recipient_id") @db.Uuid
+  title       String   @db.VarChar(200)
+  message     String   @db.VarChar(1000)
+  /// maintenance_created | maintenance_approved | maintenance_rejected | maintenance_completed
+  type        String   @db.VarChar(50)
+  /// id of the related entity (e.g. maintenanceLogId)
+  relatedId   String?  @map("related_id") @db.Uuid
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  recipient   User     @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, isRead, createdAt(sort: Desc)])
+  @@map("in_app_notifications")
 }
 

@@ -19,13 +19,14 @@ import { jwtVerify, type JWTPayload } from 'jose'
 // ── Route rules (inlined — Edge runtime cannot do dynamic imports) ─────────────
 
 const ROUTE_PERMISSIONS: Record<string, string[]> = {
-  '/admin':       ['users', 'audit', 'config'],
-  '/quality':     ['quality'],
-  '/operations':  ['batch', 'rooms'],
-  '/room':        ['batch', 'rooms'],
-  '/maintenance': ['equipment'],
-  '/warehouse':   ['inventory'],
-  '/data':        ['config'],
+  '/admin':            ['users', 'audit', 'config'],
+  '/quality':          ['quality'],
+  '/operations':       ['batch', 'rooms'],
+  '/room/maintenance': ['batch', 'rooms', 'users'],   // User Admin + operators
+  '/room':             ['batch', 'rooms'],
+  '/maintenance':      ['equipment'],
+  '/warehouse':        ['inventory'],
+  '/data':             ['config'],
 }
 
 const PROTECTED_PREFIXES = [...Object.keys(ROUTE_PERMISSIONS), '/dashboard']

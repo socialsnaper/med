@@ -39,6 +39,7 @@ import { equQacSopStepsRouter }         from './routes/equ-qac-sop-steps.routes'
 import { uploadsRouter }                from './routes/uploads.routes';
 import { roomsRouter }                 from './routes/rooms.routes';
 import { roomMaintenanceRouter }       from './routes/room-maintenance.routes';
+import { notificationRouter }          from './routes/notification.routes';
 import { AuthError }               from './services/auth.service';
 import { UserError }               from './services/users.service';
 import { RoomTypeError }           from './services/room-types.service';
@@ -105,6 +106,7 @@ app.use('/api/equ-inspection2-sop-steps', equInspection2SopStepsRouter);
 app.use('/api/equ-qac-sop-steps',         equQacSopStepsRouter);
 app.use('/api/rooms',             roomsRouter);
 app.use('/api/room-maintenance',  roomMaintenanceRouter);
+app.use('/api/notifications',     notificationRouter);
 
 // ── Uploads: static serving + file-upload endpoint ───────────────────────────
 // Static MUST come before the upload router so GET requests are served directly
