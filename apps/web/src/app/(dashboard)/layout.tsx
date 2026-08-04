@@ -26,18 +26,11 @@ import { NotificationBell } from "@/components/NotificationBell"
 
 // ── Nav item types ─────────────────────────────────────────────────────────────
 
-interface NavChild {
-  label: string
-  href:  string
-  /** If set, only render this child when userRole is in this list */
-  roles?: string[]
-}
-
 interface NavItem {
   label:    string
   href?:    string
   icon:     React.ElementType
-  children?: NavChild[]
+  children?: { label: string; href: string }[]
   /** If set, only render when the condition is true */
   roles?:   string[]
 }
@@ -55,7 +48,7 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["System Administrator", "User Admin"],
     children: [
       { label: "Users",           href: "/admin/users" },
-      { label: "Access Overview", href: "/admin/access-overview", roles: ["System Administrator"] },
+      { label: "Access Overview", href: "/admin/access-overview" },
     ],
   },
   {
@@ -138,9 +131,7 @@ function Sidebar({ userRole, onNavigate }: { userRole?: string; onNavigate?: () 
 
               {isOpen && (
                 <div className="ml-6 mt-1 flex flex-col gap-1">
-                  {item.children
-                    .filter((child) => !child.roles || (userRole && child.roles.includes(userRole)))
-                    .map((child) => {
+                  {item.children.map((child) => {
                     const isActive = pathname === child.href || pathname.startsWith(child.href + "/")
                     return (
                       <Link

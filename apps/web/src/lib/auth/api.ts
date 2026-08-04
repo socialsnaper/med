@@ -274,10 +274,11 @@ export function apiSetUserStatus(
 // ── Roles ─────────────────────────────────────────────────────────────────────
 
 export interface RoleItem {
-  id:        string
-  roleName:  string
-  roleGroup: string | null
-  isActive:  boolean
+  id:          string
+  roleName:    string
+  roleGroup:   string | null
+  isActive:    boolean
+  permissions: Record<string, string> | null | undefined
 }
 
 export function apiGetRoles(accessToken: string): Promise<RoleItem[]> {
