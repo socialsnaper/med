@@ -32,6 +32,7 @@ export interface CleaningEquipmentItem {
   replacementIntervalDays: number | null;
   displayOrder:            number;
   isActive:                boolean;
+  status:                  string;
   createdAt:               Date;
   updatedAt:               Date;
 }
@@ -58,7 +59,7 @@ const SELECT = {
   id: true, equipmentCode: true, equipmentName: true,
   equipmentDetails: true, cleaningType: true, material: true,
   requiresReplacement: true, replacementIntervalDays: true,
-  displayOrder: true, isActive: true, createdAt: true, updatedAt: true,
+  displayOrder: true, isActive: true, status: true, createdAt: true, updatedAt: true,
 } as const;
 
 // ── CSV helpers ────────────────────────────────────────────────────────────────

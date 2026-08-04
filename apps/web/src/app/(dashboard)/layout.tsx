@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   DoorOpen,
+  Wrench,
 } from "lucide-react"
 import { ProtectedLayout } from "./ProtectedLayout"
 import { useState } from "react"
@@ -25,11 +26,18 @@ import { NotificationBell } from "@/components/NotificationBell"
 
 // ── Nav item types ─────────────────────────────────────────────────────────────
 
+interface NavChild {
+  label: string
+  href:  string
+  /** If set, only render this child when userRole is in this list */
+  roles?: string[]
+}
+
 interface NavItem {
   label:    string
   href?:    string
   icon:     React.ElementType
-  children?: { label: string; href: string }[]
+  children?: NavChild[]
   /** If set, only render when the condition is true */
   roles?:   string[]
 }
@@ -39,13 +47,15 @@ const NAV_ITEMS: NavItem[] = [
     label: "Dashboard",
     href:  "/admin",
     icon:  LayoutDashboard,
+    roles: ["System Administrator", "User Admin", "Warehouse Operator"],
   },
   {
     label: "Administration",
     icon:  Shield,
     roles: ["System Administrator", "User Admin"],
     children: [
-      { label: "Users", href: "/admin/users" },
+      { label: "Users",           href: "/admin/users" },
+      { label: "Access Overview", href: "/admin/access-overview", roles: ["System Administrator"] },
     ],
   },
   {
@@ -58,19 +68,28 @@ const NAV_ITEMS: NavItem[] = [
     label: "Operations",
     href:  "/operations",
     icon:  Boxes,
+    roles: ["System Administrator", "User Admin", "Warehouse Operator"],
   },
   {
     label: "Quality",
     href:  "/quality",
     icon:  ClipboardCheck,
+    roles: ["System Administrator", "User Admin", "Warehouse Operator"],
   },
   {
     label: "Room",
     icon:  DoorOpen,
+    roles: ["System Administrator", "User Admin", "Warehouse Operator", "Cleaning Operator"],
     children: [
       { label: "Maintenance", href: "/room/maintenance" },
       { label: "Cleaning", href: "/room/cleaning" },
     ],
+  },
+  {
+    label: "Equipment Maintenance",
+    href:  "/maintenance",
+    icon:  Wrench,
+    roles: ["System Administrator", "User Admin", "Warehouse Operator", "Maintenance Technician"],
   },
 ]
 
@@ -119,7 +138,9 @@ function Sidebar({ userRole, onNavigate }: { userRole?: string; onNavigate?: () 
 
               {isOpen && (
                 <div className="ml-6 mt-1 flex flex-col gap-1">
-                  {item.children.map((child) => {
+                  {item.children
+                    .filter((child) => !child.roles || (userRole && child.roles.includes(userRole)))
+                    .map((child) => {
                     const isActive = pathname === child.href || pathname.startsWith(child.href + "/")
                     return (
                       <Link

@@ -520,6 +520,7 @@ export interface CleaningEquipmentItem {
   replacementIntervalDays: number | null
   displayOrder:            number
   isActive:                boolean
+  status:                  string
   createdAt:               string
   updatedAt:               string
 }
@@ -1865,6 +1866,127 @@ export function apiStartMaintenance(
   id:          string,
 ): Promise<MaintenanceLogItem> {
   return apiPost<MaintenanceLogItem>(`/api/room-maintenance/${id}/start`, {}, accessToken)
+}
+
+// ── Equipment Maintenance ─────────────────────────────────────────────────────
+
+export interface EquipmentMaintenanceTypeItem {
+  id:                    string
+  maintenanceTypeCode:   string
+  maintenanceTypeName:   string
+  maintenanceTypeDetails: string | null
+  displayOrder:          number
+  isActive:              boolean
+}
+
+export interface EquipmentItem {
+  id:           string
+  equipmentCode: string
+  equipmentName: string
+  equipmentType: string
+  location:     string | null
+  manufacturer: string | null
+  isActive:     boolean
+  status:       string
+}
+
+export interface EquipmentMaintenanceLogItem {
+  id:                       string
+  slid:                     number
+  equipmentId:              string
+  equipmentCode:            string
+  equipmentName:            string
+  equipmentType:            string
+  location:                 string | null
+  manufacturer:             string | null
+  maintenanceTypeId:        string
+  maintenanceTypeName:      string
+  maintenanceStartDatetime: string
+  maintenanceEndDatetime:   string | null
+  durationMinutes:          number | null
+  reasonForMaintenance:     string
+  status:                   MaintenanceStatus
+  markedBy:                 string
+  markedByName:             string
+  stoppedBy:                string | null
+  stoppedByName:            string | null
+  stoppedAt:                string | null
+  completionRemarks:        string | null
+  authorizedBy:             string | null
+  authorizedByName:         string | null
+  authorizedAt:             string | null
+  authorizationRemarks:     string | null
+  authorizationStatus:      AuthorizationStatus
+  createdAt:                string
+  updatedAt:                string
+}
+
+export interface CreateEquipmentMaintenancePayload {
+  equipmentId:              string
+  maintenanceTypeId:        string
+  maintenanceStartDatetime: string
+  reasonForMaintenance:     string
+}
+
+export function apiListEquipmentMaintenanceTypes(
+  accessToken: string,
+): Promise<EquipmentMaintenanceTypeItem[]> {
+  return apiGet<EquipmentMaintenanceTypeItem[]>("/api/equipment-maintenance/types", accessToken)
+}
+
+export function apiListEquipment(
+  accessToken: string,
+): Promise<EquipmentItem[]> {
+  return apiGet<EquipmentItem[]>("/api/equipment-maintenance/equipment", accessToken)
+}
+
+export function apiListEquipmentMaintenanceLogs(
+  accessToken: string,
+  filters?: { status?: string; equipmentId?: string },
+): Promise<EquipmentMaintenanceLogItem[]> {
+  const p = new URLSearchParams()
+  if (filters?.status)      p.set("status", filters.status)
+  if (filters?.equipmentId) p.set("equipmentId", filters.equipmentId)
+  const qs = p.toString()
+  return apiGet<EquipmentMaintenanceLogItem[]>(`/api/equipment-maintenance${qs ? "?" + qs : ""}`, accessToken)
+}
+
+export function apiCreateEquipmentMaintenance(
+  accessToken: string,
+  payload:     CreateEquipmentMaintenancePayload,
+): Promise<EquipmentMaintenanceLogItem> {
+  return apiPost<EquipmentMaintenanceLogItem>("/api/equipment-maintenance", payload, accessToken)
+}
+
+export function apiStartEquipmentMaintenance(
+  accessToken: string,
+  id:          string,
+): Promise<EquipmentMaintenanceLogItem> {
+  return apiPost<EquipmentMaintenanceLogItem>(`/api/equipment-maintenance/${id}/start`, {}, accessToken)
+}
+
+export function apiStopEquipmentMaintenance(
+  accessToken: string,
+  id:          string,
+  payload?:    { completionRemarks?: string },
+): Promise<EquipmentMaintenanceLogItem> {
+  return apiPost<EquipmentMaintenanceLogItem>(`/api/equipment-maintenance/${id}/stop`, payload ?? {}, accessToken)
+}
+
+export function apiApproveEquipmentMaintenance(
+  accessToken: string,
+  id:          string,
+  payload?:    { authorizationRemarks?: string },
+): Promise<EquipmentMaintenanceLogItem> {
+  return apiPost<EquipmentMaintenanceLogItem>(`/api/equipment-maintenance/${id}/approve`, payload ?? {}, accessToken)
+}
+
+export function apiRejectEquipmentMaintenance(
+  accessToken: string,
+  id:          string,
+  payload:     { authorizationRemarks: string },
+): Promise<EquipmentMaintenanceLogItem> {
+  return apiPost<EquipmentMaintenanceLogItem>(`/api/equipment-maintenance/${id}/reject`, payload, accessToken)
 }
 
 // ── In-App Notifications ──────────────────────────────────────────────────────

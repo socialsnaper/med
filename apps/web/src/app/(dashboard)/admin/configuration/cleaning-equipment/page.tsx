@@ -21,7 +21,7 @@ import { EditCleaningEquipmentDialog } from "./EditCleaningEquipmentDialog"
 import {
   Sparkles, ChevronLeft, Plus, Pencil, Trash2, Search,
   Loader2, AlertCircle, CheckCircle2, XCircle, Download,
-  Upload, RefreshCw, X,
+  Upload, RefreshCw, X, Wrench,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -45,7 +45,14 @@ function TypeBadge({ type }: { type: string }) {
   )
 }
 
-function StatusBadge({ isActive }: { isActive: boolean }) {
+function StatusBadge({ isActive, status }: { isActive: boolean; status: string }) {
+  if (status === "under_maintenance") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+        <Wrench className="size-3" /> Maintenance
+      </span>
+    )
+  }
   return isActive ? (
     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
       <CheckCircle2 className="size-3" /> Active
@@ -439,13 +446,14 @@ export default function CleaningEquipmentPage() {
                           <span className="text-xs text-muted-foreground/50">None</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-center"><StatusBadge isActive={item.isActive} /></td>
+                      <td className="px-4 py-3 text-center"><StatusBadge isActive={item.isActive} status={item.status} /></td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             size="icon" variant="ghost" className="size-8"
                             onClick={() => { setDeleteId(null); setEditItem(item) }}
-                            title="Edit"
+                            title={item.status === "under_maintenance" ? "Cannot edit — equipment is under maintenance" : "Edit"}
+                            disabled={item.status === "under_maintenance"}
                           >
                             <Pencil className="size-3.5" />
                           </Button>
@@ -453,7 +461,8 @@ export default function CleaningEquipmentPage() {
                             size="icon" variant="ghost"
                             className="size-8 hover:text-destructive hover:bg-destructive/10"
                             onClick={() => { setDeleteId(deleteId === item.id ? null : item.id); setDeleteError(null) }}
-                            title="Delete"
+                            title={item.status === "under_maintenance" ? "Cannot delete — equipment is under maintenance" : "Delete"}
+                            disabled={item.status === "under_maintenance"}
                           >
                             <Trash2 className="size-3.5" />
                           </Button>

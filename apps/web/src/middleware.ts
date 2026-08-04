@@ -24,7 +24,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/operations':       ['batch', 'rooms'],
   '/room/maintenance': ['batch', 'rooms', 'users'],   // User Admin + operators
   '/room':             ['batch', 'rooms'],
-  '/maintenance':      ['equipment'],
+  '/maintenance':      ['batch', 'rooms', 'users', 'equipment'],   // Equipment maintenance — User Admin, Sys Admin, Warehouse Operator
   '/warehouse':        ['inventory'],
   '/data':             ['config'],
 }
@@ -49,8 +49,9 @@ function defaultRoute(perms: Record<string, string>): string {
   const has = (k: string) => perms[k] && perms[k] !== 'none'
   if (has('users') || (has('config') && has('audit'))) return '/admin'
   if (has('quality')) return '/quality'
-  if (has('batch') || has('rooms')) return '/operations'
+  if (has('batch')) return '/operations'
   if (has('equipment')) return '/maintenance'
+  if (has('rooms')) return '/room'
   if (has('inventory')) return '/warehouse'
   return '/operations'
 }
