@@ -48,7 +48,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defineExtension = exports.JsonNullValueFilter = exports.NullsOrder = exports.QueryMode = exports.JsonNullValueInput = exports.SortOrder = exports.RoomInspection1SopStepMediaScalarFieldEnum = exports.RoomInspection1SopStepScalarFieldEnum = exports.RoomCleaningSopStepScalarFieldEnum = exports.RoomCleaningTypeScalarFieldEnum = exports.FunctionTypeScalarFieldEnum = exports.PackagingTypeScalarFieldEnum = exports.CleaningEquipmentScalarFieldEnum = exports.ProcessTypeScalarFieldEnum = exports.RoomTypeScalarFieldEnum = exports.TotpBackupCodeScalarFieldEnum = exports.RefreshTokenScalarFieldEnum = exports.LoginAuditScalarFieldEnum = exports.LoginAttemptScalarFieldEnum = exports.UserScalarFieldEnum = exports.RoleScalarFieldEnum = exports.CompanyScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
+exports.ScaleMaintenanceTypeScalarFieldEnum = exports.ScaleScalarFieldEnum = exports.StandardWeightScalarFieldEnum = exports.EquQacSopStepMediaScalarFieldEnum = exports.EquQacSopStepScalarFieldEnum = exports.EquInspection2SopStepMediaScalarFieldEnum = exports.EquInspection2SopStepScalarFieldEnum = exports.EquInspection1SopStepMediaScalarFieldEnum = exports.EquInspection1SopStepScalarFieldEnum = exports.EquCleaningSopStepMediaScalarFieldEnum = exports.EquCleaningSopStepScalarFieldEnum = exports.RoomQacSopStepMediaScalarFieldEnum = exports.RoomQacSopStepScalarFieldEnum = exports.RoomInspection2SopStepMediaScalarFieldEnum = exports.RoomInspection2SopStepScalarFieldEnum = exports.RoomInspection1SopStepMediaScalarFieldEnum = exports.RoomInspection1SopStepScalarFieldEnum = exports.RoomCleaningSopStepScalarFieldEnum = exports.RoomCleaningTypeScalarFieldEnum = exports.FunctionTypeScalarFieldEnum = exports.PackagingTypeScalarFieldEnum = exports.CleaningEquipmentScalarFieldEnum = exports.ProcessTypeScalarFieldEnum = exports.RoomTypeScalarFieldEnum = exports.TotpBackupCodeScalarFieldEnum = exports.RefreshTokenScalarFieldEnum = exports.LoginAuditScalarFieldEnum = exports.LoginAttemptScalarFieldEnum = exports.UserScalarFieldEnum = exports.RoleScalarFieldEnum = exports.CompanyScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
+exports.defineExtension = exports.JsonNullValueFilter = exports.NullsOrder = exports.QueryMode = exports.NullableJsonNullValueInput = exports.JsonNullValueInput = exports.SortOrder = exports.EquipmentDetailScalarFieldEnum = exports.InAppNotificationScalarFieldEnum = exports.EquipmentMaintenanceAuditScalarFieldEnum = exports.EquipmentMaintenanceLogScalarFieldEnum = exports.EquipmentMaintenanceTypeScalarFieldEnum = exports.RoomMaintenanceAuditScalarFieldEnum = exports.RoomMaintenanceLogScalarFieldEnum = exports.RoomMaintenanceTypeScalarFieldEnum = exports.RoomScalarFieldEnum = exports.ScaleMaintenanceLogScalarFieldEnum = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/client"));
 /**
  * Prisma Errors
@@ -118,7 +119,32 @@ exports.ModelName = {
     RoomCleaningType: 'RoomCleaningType',
     RoomCleaningSopStep: 'RoomCleaningSopStep',
     RoomInspection1SopStep: 'RoomInspection1SopStep',
-    RoomInspection1SopStepMedia: 'RoomInspection1SopStepMedia'
+    RoomInspection1SopStepMedia: 'RoomInspection1SopStepMedia',
+    RoomInspection2SopStep: 'RoomInspection2SopStep',
+    RoomInspection2SopStepMedia: 'RoomInspection2SopStepMedia',
+    RoomQacSopStep: 'RoomQacSopStep',
+    RoomQacSopStepMedia: 'RoomQacSopStepMedia',
+    EquCleaningSopStep: 'EquCleaningSopStep',
+    EquCleaningSopStepMedia: 'EquCleaningSopStepMedia',
+    EquInspection1SopStep: 'EquInspection1SopStep',
+    EquInspection1SopStepMedia: 'EquInspection1SopStepMedia',
+    EquInspection2SopStep: 'EquInspection2SopStep',
+    EquInspection2SopStepMedia: 'EquInspection2SopStepMedia',
+    EquQacSopStep: 'EquQacSopStep',
+    EquQacSopStepMedia: 'EquQacSopStepMedia',
+    StandardWeight: 'StandardWeight',
+    Scale: 'Scale',
+    ScaleMaintenanceType: 'ScaleMaintenanceType',
+    ScaleMaintenanceLog: 'ScaleMaintenanceLog',
+    Room: 'Room',
+    RoomMaintenanceType: 'RoomMaintenanceType',
+    RoomMaintenanceLog: 'RoomMaintenanceLog',
+    RoomMaintenanceAudit: 'RoomMaintenanceAudit',
+    EquipmentMaintenanceType: 'EquipmentMaintenanceType',
+    EquipmentMaintenanceLog: 'EquipmentMaintenanceLog',
+    EquipmentMaintenanceAudit: 'EquipmentMaintenanceAudit',
+    InAppNotification: 'InAppNotification',
+    EquipmentDetail: 'EquipmentDetail'
 };
 /**
  * Enums
@@ -245,6 +271,11 @@ exports.CleaningEquipmentScalarFieldEnum = {
     replacementIntervalDays: 'replacementIntervalDays',
     displayOrder: 'displayOrder',
     isActive: 'isActive',
+    location: 'location',
+    manufacturer: 'manufacturer',
+    status: 'status',
+    statusReason: 'statusReason',
+    currentMaintenanceLogId: 'currentMaintenanceLogId',
     createdBy: 'createdBy',
     updatedBy: 'updatedBy',
     createdAt: 'createdAt',
@@ -341,11 +372,424 @@ exports.RoomInspection1SopStepMediaScalarFieldEnum = {
     uploadedBy: 'uploadedBy',
     createdAt: 'createdAt'
 };
+exports.RoomInspection2SopStepScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    cleaningTypeId: 'cleaningTypeId',
+    stepNumber: 'stepNumber',
+    procedureText: 'procedureText',
+    status: 'status',
+    authorizedBy: 'authorizedBy',
+    authorizedAt: 'authorizedAt',
+    authorizationRemarks: 'authorizationRemarks',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.RoomInspection2SopStepMediaScalarFieldEnum = {
+    id: 'id',
+    sopStepId: 'sopStepId',
+    displayOrder: 'displayOrder',
+    fileUrl: 'fileUrl',
+    fileName: 'fileName',
+    fileType: 'fileType',
+    caption: 'caption',
+    uploadedBy: 'uploadedBy',
+    createdAt: 'createdAt'
+};
+exports.RoomQacSopStepScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    cleaningTypeId: 'cleaningTypeId',
+    stepNumber: 'stepNumber',
+    procedureText: 'procedureText',
+    status: 'status',
+    authorizedBy: 'authorizedBy',
+    authorizedAt: 'authorizedAt',
+    authorizationRemarks: 'authorizationRemarks',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.RoomQacSopStepMediaScalarFieldEnum = {
+    id: 'id',
+    sopStepId: 'sopStepId',
+    displayOrder: 'displayOrder',
+    fileUrl: 'fileUrl',
+    fileName: 'fileName',
+    fileType: 'fileType',
+    caption: 'caption',
+    uploadedBy: 'uploadedBy',
+    createdAt: 'createdAt'
+};
+exports.EquCleaningSopStepScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    cleaningTypeId: 'cleaningTypeId',
+    stepNumber: 'stepNumber',
+    timeAllottedDisplay: 'timeAllottedDisplay',
+    cleaningMethod: 'cleaningMethod',
+    procedureText: 'procedureText',
+    chemicalUsed: 'chemicalUsed',
+    equipmentUsed: 'equipmentUsed',
+    status: 'status',
+    authorizedBy: 'authorizedBy',
+    authorizedAt: 'authorizedAt',
+    authorizationRemarks: 'authorizationRemarks',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.EquCleaningSopStepMediaScalarFieldEnum = {
+    id: 'id',
+    sopStepId: 'sopStepId',
+    displayOrder: 'displayOrder',
+    fileUrl: 'fileUrl',
+    fileName: 'fileName',
+    fileType: 'fileType',
+    caption: 'caption',
+    uploadedBy: 'uploadedBy',
+    createdAt: 'createdAt'
+};
+exports.EquInspection1SopStepScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    cleaningTypeId: 'cleaningTypeId',
+    stepNumber: 'stepNumber',
+    procedureText: 'procedureText',
+    status: 'status',
+    authorizedBy: 'authorizedBy',
+    authorizedAt: 'authorizedAt',
+    authorizationRemarks: 'authorizationRemarks',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.EquInspection1SopStepMediaScalarFieldEnum = {
+    id: 'id',
+    sopStepId: 'sopStepId',
+    displayOrder: 'displayOrder',
+    fileUrl: 'fileUrl',
+    fileName: 'fileName',
+    fileType: 'fileType',
+    caption: 'caption',
+    uploadedBy: 'uploadedBy',
+    createdAt: 'createdAt'
+};
+exports.EquInspection2SopStepScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    cleaningTypeId: 'cleaningTypeId',
+    stepNumber: 'stepNumber',
+    procedureText: 'procedureText',
+    status: 'status',
+    authorizedBy: 'authorizedBy',
+    authorizedAt: 'authorizedAt',
+    authorizationRemarks: 'authorizationRemarks',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.EquInspection2SopStepMediaScalarFieldEnum = {
+    id: 'id',
+    sopStepId: 'sopStepId',
+    displayOrder: 'displayOrder',
+    fileUrl: 'fileUrl',
+    fileName: 'fileName',
+    fileType: 'fileType',
+    caption: 'caption',
+    uploadedBy: 'uploadedBy',
+    createdAt: 'createdAt'
+};
+exports.EquQacSopStepScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    cleaningTypeId: 'cleaningTypeId',
+    stepNumber: 'stepNumber',
+    procedureText: 'procedureText',
+    status: 'status',
+    authorizedBy: 'authorizedBy',
+    authorizedAt: 'authorizedAt',
+    authorizationRemarks: 'authorizationRemarks',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.EquQacSopStepMediaScalarFieldEnum = {
+    id: 'id',
+    sopStepId: 'sopStepId',
+    displayOrder: 'displayOrder',
+    fileUrl: 'fileUrl',
+    fileName: 'fileName',
+    fileType: 'fileType',
+    caption: 'caption',
+    uploadedBy: 'uploadedBy',
+    createdAt: 'createdAt'
+};
+exports.StandardWeightScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    weightSerialNo: 'weightSerialNo',
+    standardWeight: 'standardWeight',
+    weightValueGrams: 'weightValueGrams',
+    lastCalibratedOn: 'lastCalibratedOn',
+    nextCalibrationDue: 'nextCalibrationDue',
+    calibrationIntervalDays: 'calibrationIntervalDays',
+    toleranceLimit: 'toleranceLimit',
+    toleranceGrams: 'toleranceGrams',
+    calibrationLab: 'calibrationLab',
+    certificateNumber: 'certificateNumber',
+    certificateUrl: 'certificateUrl',
+    material: 'material',
+    accuracyClass: 'accuracyClass',
+    storageLocation: 'storageLocation',
+    isActive: 'isActive',
+    inactiveReason: 'inactiveReason',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.ScaleScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    scaleId: 'scaleId',
+    scaleNumber: 'scaleNumber',
+    scaleName: 'scaleName',
+    minRange: 'minRange',
+    minRangeGrams: 'minRangeGrams',
+    maxRange: 'maxRange',
+    maxRangeGrams: 'maxRangeGrams',
+    capacity: 'capacity',
+    capacityGrams: 'capacityGrams',
+    leastCount: 'leastCount',
+    leastCountGrams: 'leastCountGrams',
+    lastVerifiedOn: 'lastVerifiedOn',
+    nextVerificationDue: 'nextVerificationDue',
+    verificationIntervalDays: 'verificationIntervalDays',
+    formVerificationNo: 'formVerificationNo',
+    nextCalibrationDue: 'nextCalibrationDue',
+    calibrationIntervalDays: 'calibrationIntervalDays',
+    formCalibrationNo: 'formCalibrationNo',
+    manufacturer: 'manufacturer',
+    modelNumber: 'modelNumber',
+    scaleType: 'scaleType',
+    status: 'status',
+    statusReason: 'statusReason',
+    isActive: 'isActive',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    currentMaintenanceLogId: 'currentMaintenanceLogId'
+};
+exports.ScaleMaintenanceTypeScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    maintenanceTypeCode: 'maintenanceTypeCode',
+    maintenanceTypeName: 'maintenanceTypeName',
+    maintenanceTypeDetails: 'maintenanceTypeDetails',
+    displayOrder: 'displayOrder',
+    isActive: 'isActive',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.ScaleMaintenanceLogScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    scaleId: 'scaleId',
+    maintenanceTypeId: 'maintenanceTypeId',
+    maintenanceStartDatetime: 'maintenanceStartDatetime',
+    maintenanceEndDatetime: 'maintenanceEndDatetime',
+    durationMinutes: 'durationMinutes',
+    reasonForMaintenance: 'reasonForMaintenance',
+    status: 'status',
+    markedBy: 'markedBy',
+    stoppedBy: 'stoppedBy',
+    stoppedAt: 'stoppedAt',
+    completionRemarks: 'completionRemarks',
+    authorizedBy: 'authorizedBy',
+    authorizedAt: 'authorizedAt',
+    authorizationRemarks: 'authorizationRemarks',
+    authorizationStatus: 'authorizationStatus',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.RoomScalarFieldEnum = {
+    id: 'id',
+    roomId: 'roomId',
+    roomName: 'roomName',
+    roomTypeId: 'roomTypeId',
+    floor: 'floor',
+    building: 'building',
+    roomDetails: 'roomDetails',
+    status: 'status',
+    statusReason: 'statusReason',
+    currentMaintenanceLogId: 'currentMaintenanceLogId',
+    isActive: 'isActive',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.RoomMaintenanceTypeScalarFieldEnum = {
+    id: 'id',
+    maintenanceTypeCode: 'maintenanceTypeCode',
+    maintenanceTypeName: 'maintenanceTypeName',
+    maintenanceTypeDetails: 'maintenanceTypeDetails',
+    displayOrder: 'displayOrder',
+    isActive: 'isActive',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.RoomMaintenanceLogScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    roomId: 'roomId',
+    maintenanceTypeId: 'maintenanceTypeId',
+    maintenanceStartDatetime: 'maintenanceStartDatetime',
+    maintenanceEndDatetime: 'maintenanceEndDatetime',
+    durationMinutes: 'durationMinutes',
+    reasonForMaintenance: 'reasonForMaintenance',
+    status: 'status',
+    markedBy: 'markedBy',
+    stoppedBy: 'stoppedBy',
+    stoppedAt: 'stoppedAt',
+    completionRemarks: 'completionRemarks',
+    authorizedBy: 'authorizedBy',
+    authorizedAt: 'authorizedAt',
+    authorizationRemarks: 'authorizationRemarks',
+    authorizationStatus: 'authorizationStatus',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.RoomMaintenanceAuditScalarFieldEnum = {
+    id: 'id',
+    maintenanceLogId: 'maintenanceLogId',
+    roomIdSnapshot: 'roomIdSnapshot',
+    roomNameSnapshot: 'roomNameSnapshot',
+    roomIdCodeSnapshot: 'roomIdCodeSnapshot',
+    action: 'action',
+    beforeState: 'beforeState',
+    afterState: 'afterState',
+    changedFields: 'changedFields',
+    performedBy: 'performedBy',
+    performedByUsername: 'performedByUsername',
+    performedByRole: 'performedByRole',
+    authorizedBy: 'authorizedBy',
+    authorizedByUsername: 'authorizedByUsername',
+    authorizedByRole: 'authorizedByRole',
+    authorizationStatus: 'authorizationStatus',
+    remarks: 'remarks',
+    ipAddress: 'ipAddress',
+    userAgent: 'userAgent',
+    createdAt: 'createdAt'
+};
+exports.EquipmentMaintenanceTypeScalarFieldEnum = {
+    id: 'id',
+    maintenanceTypeCode: 'maintenanceTypeCode',
+    maintenanceTypeName: 'maintenanceTypeName',
+    maintenanceTypeDetails: 'maintenanceTypeDetails',
+    displayOrder: 'displayOrder',
+    isActive: 'isActive',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.EquipmentMaintenanceLogScalarFieldEnum = {
+    id: 'id',
+    slid: 'slid',
+    equipmentId: 'equipmentId',
+    maintenanceTypeId: 'maintenanceTypeId',
+    maintenanceStartDatetime: 'maintenanceStartDatetime',
+    maintenanceEndDatetime: 'maintenanceEndDatetime',
+    durationMinutes: 'durationMinutes',
+    reasonForMaintenance: 'reasonForMaintenance',
+    status: 'status',
+    markedBy: 'markedBy',
+    stoppedBy: 'stoppedBy',
+    stoppedAt: 'stoppedAt',
+    completionRemarks: 'completionRemarks',
+    authorizedBy: 'authorizedBy',
+    authorizedAt: 'authorizedAt',
+    authorizationRemarks: 'authorizationRemarks',
+    authorizationStatus: 'authorizationStatus',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.EquipmentMaintenanceAuditScalarFieldEnum = {
+    id: 'id',
+    maintenanceLogId: 'maintenanceLogId',
+    equipmentIdSnapshot: 'equipmentIdSnapshot',
+    equipmentNameSnapshot: 'equipmentNameSnapshot',
+    equipmentCodeSnapshot: 'equipmentCodeSnapshot',
+    action: 'action',
+    beforeState: 'beforeState',
+    afterState: 'afterState',
+    changedFields: 'changedFields',
+    performedBy: 'performedBy',
+    performedByUsername: 'performedByUsername',
+    performedByRole: 'performedByRole',
+    authorizationStatus: 'authorizationStatus',
+    ipAddress: 'ipAddress',
+    createdAt: 'createdAt'
+};
+exports.InAppNotificationScalarFieldEnum = {
+    id: 'id',
+    recipientId: 'recipientId',
+    title: 'title',
+    message: 'message',
+    type: 'type',
+    relatedId: 'relatedId',
+    isRead: 'isRead',
+    createdAt: 'createdAt'
+};
+exports.EquipmentDetailScalarFieldEnum = {
+    id: 'id',
+    equipmentId: 'equipmentId',
+    equipmentName: 'equipmentName',
+    serialNo: 'serialNo',
+    supportedProcesses: 'supportedProcesses',
+    equipmentType: 'equipmentType',
+    manufacturer: 'manufacturer',
+    purchaseDate: 'purchaseDate',
+    commissionDate: 'commissionDate',
+    decommissionDate: 'decommissionDate',
+    isActive: 'isActive',
+    status: 'status',
+    statusReason: 'statusReason',
+    currentMaintenanceLogId: 'currentMaintenanceLogId',
+    createdBy: 'createdBy',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
 exports.SortOrder = {
     asc: 'asc',
     desc: 'desc'
 };
 exports.JsonNullValueInput = {
+    JsonNull: exports.JsonNull
+};
+exports.NullableJsonNullValueInput = {
+    DbNull: exports.DbNull,
     JsonNull: exports.JsonNull
 };
 exports.QueryMode = {

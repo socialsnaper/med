@@ -83,8 +83,8 @@ const LOG_SELECT = {
   authorizationStatus: true, createdAt: true, updatedAt: true,
   equipment: {
     select: {
-      id: true, equipmentCode: true, equipmentName: true,
-      cleaningType: true, location: true, manufacturer: true,
+      id: true, equipmentId: true, equipmentName: true,
+      equipmentType: true, manufacturer: true,
     },
   },
   maintenanceType: { select: { maintenanceTypeName: true } },
@@ -99,10 +99,10 @@ function mapLog(row: any): EquipmentMaintenanceLogItem {
     id:                       row.id,
     slid:                     row.slid,
     equipmentId:              row.equipmentId,
-    equipmentCode:            row.equipment.equipmentCode,
+    equipmentCode:            row.equipment.equipmentId,
     equipmentName:            row.equipment.equipmentName,
-    equipmentType:            row.equipment.cleaningType,
-    location:                 row.equipment.location ?? null,
+    equipmentType:            row.equipment.equipmentType,
+    location:                 null,
     manufacturer:             row.equipment.manufacturer ?? null,
     maintenanceTypeId:        row.maintenanceTypeId,
     maintenanceTypeName:      row.maintenanceType.maintenanceTypeName,
@@ -151,24 +151,24 @@ export async function listEquipmentMaintenanceTypes(
 
 export async function listEquipment(schemaName: string): Promise<EquipmentItem[]> {
   const db = getPrismaClient(schemaName);
-  const rows = await db.cleaningEquipment.findMany({
+  const rows = await db.equipmentDetail.findMany({
     select: {
-      id: true, equipmentCode: true, equipmentName: true,
-      cleaningType: true, location: true, manufacturer: true,
-      isActive: true, status: true,
+      id: true, equipmentId: true, equipmentName: true,
+      equipmentType: true, manufacturer: true,
+      isActive: true,
     },
     where:   { isActive: true },
     orderBy: [{ equipmentName: 'asc' }],
   });
   return rows.map((r) => ({
-    id:           r.id,
-    equipmentCode: r.equipmentCode,
+    id:            r.id,
+    equipmentCode: r.equipmentId,
     equipmentName: r.equipmentName,
-    equipmentType: r.cleaningType,
-    location:     (r as any).location ?? null,
-    manufacturer: (r as any).manufacturer ?? null,
-    isActive:     r.isActive,
-    status:       (r as any).status ?? 'active',
+    equipmentType: r.equipmentType,
+    location:      null,
+    manufacturer:  r.manufacturer ?? null,
+    isActive:      r.isActive,
+    status:        (r as any).status ?? 'active',
   }));
 }
 
@@ -233,19 +233,12 @@ export async function createEquipmentMaintenance(
 
   const db = getPrismaClient(schemaName);
 
-  const equipment = await db.cleaningEquipment.findUnique({
+  const equipment = await db.equipmentDetail.findUnique({
     where:  { id: dto.equipmentId },
-    select: { id: true, equipmentCode: true, equipmentName: true, isActive: true, status: true },
+    select: { id: true, equipmentId: true, equipmentName: true, isActive: true },
   });
   if (!equipment) throw new EquipmentMaintenanceError('Equipment not found', 404, 'EQUIPMENT_NOT_FOUND');
   if (!equipment.isActive) throw new EquipmentMaintenanceError('Equipment is not active', 409, 'EQUIPMENT_INACTIVE');
-  if ((equipment as any).status === 'under_maintenance') {
-    throw new EquipmentMaintenanceError(
-      'Equipment is already under maintenance. Stop the current maintenance before starting a new one.',
-      409,
-      'ALREADY_UNDER_MAINTENANCE',
-    );
-  }
 
   const activeMaint = await db.equipmentMaintenanceLog.findFirst({
     where:  { equipmentId: dto.equipmentId, status: { in: ['active', 'scheduled'] } },
@@ -284,13 +277,13 @@ export async function createEquipmentMaintenance(
     });
 
     // Block the equipment immediately
-    await tx.cleaningEquipment.update({
+    await tx.equipmentDetail.update({
       where: { id: dto.equipmentId },
       data: {
-        status:                 'under_maintenance',
-        statusReason:           `Maintenance requested: ${dto.reasonForMaintenance}`,
+        status:                  'under_maintenance',
+        statusReason:            `Maintenance requested: ${dto.reasonForMaintenance}`,
         currentMaintenanceLogId: log.id,
-        updatedBy:              userId,
+        updatedBy:               userId,
       } as any,
     });
 
@@ -300,7 +293,7 @@ export async function createEquipmentMaintenance(
         maintenanceLogId:       log.id,
         equipmentIdSnapshot:    equipment.id,
         equipmentNameSnapshot:  equipment.equipmentName,
-        equipmentCodeSnapshot:  equipment.equipmentCode,
+        equipmentCodeSnapshot:  equipment.equipmentId,
         action:                 'CREATE',
         afterState:             log as object,
         changedFields:          [],
@@ -399,7 +392,7 @@ export async function startEquipmentMaintenance(
         maintenanceLogId:       id,
         equipmentIdSnapshot:    updated.equipment.id,
         equipmentNameSnapshot:  updated.equipment.equipmentName,
-        equipmentCodeSnapshot:  updated.equipment.equipmentCode,
+        equipmentCodeSnapshot:  (updated.equipment as any).equipmentId,
         action:                 'START',
         beforeState:            before as object,
         afterState:             updated as object,
@@ -472,7 +465,7 @@ export async function stopEquipmentMaintenance(
     });
 
     // Restore equipment to active
-    await tx.cleaningEquipment.update({
+    await tx.equipmentDetail.update({
       where: { id: log.equipmentId },
       data: {
         status:                  'active',
@@ -487,7 +480,7 @@ export async function stopEquipmentMaintenance(
         maintenanceLogId:       id,
         equipmentIdSnapshot:    updated.equipment.id,
         equipmentNameSnapshot:  updated.equipment.equipmentName,
-        equipmentCodeSnapshot:  updated.equipment.equipmentCode,
+        equipmentCodeSnapshot:  (updated.equipment as any).equipmentId,
         action:                 'STOP',
         beforeState:            before as object,
         afterState:             updated as object,
@@ -586,7 +579,7 @@ export async function approveEquipmentMaintenance(
         maintenanceLogId:       id,
         equipmentIdSnapshot:    updated.equipment.id,
         equipmentNameSnapshot:  updated.equipment.equipmentName,
-        equipmentCodeSnapshot:  updated.equipment.equipmentCode,
+        equipmentCodeSnapshot:  (updated.equipment as any).equipmentId,
         action:                 'APPROVE',
         beforeState:            before as object,
         afterState:             updated as object,
@@ -683,7 +676,7 @@ export async function rejectEquipmentMaintenance(
     });
 
     // Restore equipment to active on rejection
-    await tx.cleaningEquipment.update({
+    await tx.equipmentDetail.update({
       where: { id: log.equipmentId },
       data: {
         status:                  'active',
@@ -698,7 +691,7 @@ export async function rejectEquipmentMaintenance(
         maintenanceLogId:       id,
         equipmentIdSnapshot:    updated.equipment.id,
         equipmentNameSnapshot:  updated.equipment.equipmentName,
-        equipmentCodeSnapshot:  updated.equipment.equipmentCode,
+        equipmentCodeSnapshot:  (updated.equipment as any).equipmentId,
         action:                 'REJECT',
         beforeState:            before as object,
         afterState:             updated as object,

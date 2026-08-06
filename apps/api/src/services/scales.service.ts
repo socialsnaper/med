@@ -22,6 +22,7 @@ export interface ScaleItem {
   slid:                     number;
   scaleId:                  string;
   scaleNumber:              string;
+  scaleName:                string | null;
   minRange:                 string | null;
   minRangeGrams:            number | null;
   maxRange:                 string | null;
@@ -75,7 +76,7 @@ function dec(v: unknown): number | null {
 // ── Internal prisma row type ───────────────────────────────────────────────────
 
 interface ScaleRow {
-  id: string; slid: number; scaleId: string; scaleNumber: string;
+  id: string; slid: number; scaleId: string; scaleNumber: string; scaleName: string | null;
   minRange: string | null; minRangeGrams: unknown | null;
   maxRange: string | null; maxRangeGrams: unknown | null;
   capacity: string | null; capacityGrams: unknown | null;
@@ -90,7 +91,7 @@ interface ScaleRow {
 }
 
 const SELECT = {
-  id: true, slid: true, scaleId: true, scaleNumber: true,
+  id: true, slid: true, scaleId: true, scaleNumber: true, scaleName: true,
   minRange: true, minRangeGrams: true, maxRange: true, maxRangeGrams: true,
   capacity: true, capacityGrams: true, leastCount: true, leastCountGrams: true,
   lastVerifiedOn: true, nextVerificationDue: true, verificationIntervalDays: true,
@@ -102,7 +103,7 @@ const SELECT = {
 
 function mapRow(r: ScaleRow): ScaleItem {
   return {
-    id: r.id, slid: r.slid, scaleId: r.scaleId, scaleNumber: r.scaleNumber,
+    id: r.id, slid: r.slid, scaleId: r.scaleId, scaleNumber: r.scaleNumber, scaleName: r.scaleName ?? null,
     minRange: r.minRange, minRangeGrams: dec(r.minRangeGrams),
     maxRange: r.maxRange, maxRangeGrams: dec(r.maxRangeGrams),
     capacity: r.capacity, capacityGrams: dec(r.capacityGrams),
@@ -197,6 +198,7 @@ export async function createScale(
     data: {
       scaleId,
       scaleNumber:              dto.scaleNumber,
+      scaleName:                dto.scaleName               ?? null,
       minRange:                 dto.minRange                ?? null,
       minRangeGrams:            dto.minRangeGrams           ?? null,
       maxRange:                 dto.maxRange                ?? null,
@@ -246,6 +248,7 @@ export async function updateScale(
     where: { id },
     data: {
       ...(dto.scaleNumber              !== undefined && { scaleNumber:              dto.scaleNumber }),
+      ...(dto.scaleName               !== undefined && { scaleName:               dto.scaleName }),
       ...(dto.minRange                 !== undefined && { minRange:                 dto.minRange }),
       ...(dto.minRangeGrams            !== undefined && { minRangeGrams:            dto.minRangeGrams }),
       ...(dto.maxRange                 !== undefined && { maxRange:                 dto.maxRange }),
@@ -284,7 +287,7 @@ export async function deleteScale(id: string, schemaName: string): Promise<void>
 // ── CSV Export ─────────────────────────────────────────────────────────────────
 
 const CSV_HEADER = csvRow([
-  'scale_id', 'scale_number', 'scale_type', 'status',
+  'scale_id', 'scale_number', 'scale_name', 'scale_type', 'status',
   'min_range', 'max_range', 'capacity', 'least_count',
   'last_verified_on', 'next_verification_due', 'verification_interval_days', 'form_verification_no',
   'next_calibration_due', 'calibration_interval_days', 'form_calibration_no',
@@ -304,7 +307,7 @@ export async function streamScalesCsv(schemaName: string, res: Response): Promis
 
   for (const r of rows) {
     res.write(csvRow([
-      r.scaleId, r.scaleNumber, r.scaleType, r.status,
+      r.scaleId, r.scaleNumber, r.scaleName, r.scaleType, r.status,
       r.minRange, r.maxRange, r.capacity, r.leastCount,
       toDateStr(r.lastVerifiedOn), toDateStr(r.nextVerificationDue),
       r.verificationIntervalDays, r.formVerificationNo,
@@ -345,6 +348,7 @@ export async function importScales(
           nextCalibrationDue:       row.nextCalibrationDue      ?? null,
           calibrationIntervalDays:  row.calibrationIntervalDays ?? 365,
           formCalibrationNo:        row.formCalibrationNo       ?? null,
+          scaleName:                row.scaleName              ?? null,
           manufacturer:             row.manufacturer            ?? null,
           modelNumber:              row.modelNumber             ?? null,
           scaleType:                row.scaleType               ?? null,

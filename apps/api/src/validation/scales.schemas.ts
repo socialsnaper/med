@@ -5,6 +5,7 @@ export const SCALE_STATUSES = ['active', 'quarantined', 'under_repair', 'retired
 
 export const CreateScaleSchema = z.object({
   scaleNumber:              z.string().min(1, 'Scale number is required').max(50).trim(),
+  scaleName:                z.string().max(150).trim().optional().nullable(),
   minRange:                 z.string().max(20).trim().optional().nullable(),
   minRangeGrams:            z.coerce.number().min(0).optional().nullable(),
   maxRange:                 z.string().max(20).trim().optional().nullable(),
@@ -30,6 +31,7 @@ export const CreateScaleSchema = z.object({
 
 export const UpdateScaleSchema = z.object({
   scaleNumber:              z.string().min(1).max(50).trim().optional(),
+  scaleName:                z.string().max(150).trim().optional().nullable(),
   minRange:                 z.string().max(20).trim().optional().nullable(),
   minRangeGrams:            z.coerce.number().min(0).optional().nullable(),
   maxRange:                 z.string().max(20).trim().optional().nullable(),
@@ -55,6 +57,7 @@ export const UpdateScaleSchema = z.object({
 
 export const ImportScaleRowSchema = z.object({
   scaleNumber:              z.string().min(1).max(50).trim(),
+  scaleName:                z.string().max(150).optional().nullable(),
   minRange:                 z.string().max(20).optional().nullable(),
   minRangeGrams:            z.coerce.number().min(0).optional().nullable(),
   maxRange:                 z.string().max(20).optional().nullable(),

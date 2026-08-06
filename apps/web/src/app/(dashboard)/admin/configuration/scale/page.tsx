@@ -402,6 +402,7 @@ export default function ScalePage() {
                 <th className="px-4 py-3 text-left w-12">S.No</th>
                 <th className="px-4 py-3 text-left">Scale ID</th>
                 <th className="px-4 py-3 text-left">Scale No.</th>
+                <th className="px-4 py-3 text-left">Scale Name</th>
                 <th className="px-4 py-3 text-left">Type</th>
                 <th className="px-4 py-3 text-left">Min Range</th>
                 <th className="px-4 py-3 text-left">Max Range</th>
@@ -419,7 +420,7 @@ export default function ScalePage() {
               {items.map((item, idx) => (
                 <tr key={item.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
                   {deleteItem?.id === item.id ? (
-                    <td colSpan={14} className="px-4 py-3">
+                    <td colSpan={15} className="px-4 py-3">
                       <DeleteConfirm
                         item={item}
                         onConfirm={handleDelete}
@@ -432,6 +433,7 @@ export default function ScalePage() {
                       <td className="px-4 py-3 text-muted-foreground">{idx + 1}</td>
                       <td className="px-4 py-3 font-mono font-medium">{item.scaleId}</td>
                       <td className="px-4 py-3 font-mono text-xs">{item.scaleNumber}</td>
+                      <td className="px-4 py-3 text-sm">{item.scaleName ?? <span className="text-muted-foreground">—</span>}</td>
                       <td className="px-4 py-3"><TypeBadge type={item.scaleType} /></td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{item.minRange ?? "—"}</td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{item.maxRange ?? "—"}</td>

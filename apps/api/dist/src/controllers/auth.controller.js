@@ -46,15 +46,15 @@ const auth_schemas_1 = require("../validation/auth.schemas");
 // ── Cookie helpers ────────────────────────────────────────────────────────────
 const REFRESH_COOKIE = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: false,
+    sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
 };
 const ACCESS_COOKIE = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: false,
+    sameSite: 'lax',
     maxAge: 15 * 60 * 1000, // 15 minutes — matches JWT TTL
     path: '/',
 };

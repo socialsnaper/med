@@ -10,6 +10,10 @@ const client_1 = require("../generated/prisma/client");
  * This guards against malformed schema names being injected into the connection URL.
  */
 const TENANT_SCHEMA_RE = /^tenant_[a-z0-9_]+$/;
+/** SSL config: disable cert verification for RDS self-signed certs in production. */
+const pgOptions = process.env.NODE_ENV === 'production'
+    ? { ssl: { rejectUnauthorized: false } }
+    : undefined;
 /** Module-level cache — one PrismaClient per schema, reused across requests. */
 const clientCache = new Map();
 let _publicClient = null;
@@ -24,7 +28,7 @@ function buildAdapter(schemaName) {
         throw new Error('DATABASE_URL environment variable is not set. ' +
             'Add it to apps/api/.env before starting the server.');
     }
-    return new adapter_pg_1.PrismaPg({ connectionString }, { schema: schemaName });
+    return new adapter_pg_1.PrismaPg({ connectionString, ...pgOptions }, { schema: schemaName });
 }
 /**
  * Returns a cached PrismaClient scoped to the public schema.
@@ -38,7 +42,7 @@ function getPublicClient() {
         throw new Error('DATABASE_URL environment variable is not set.');
     }
     _publicClient = new client_1.PrismaClient({
-        adapter: new adapter_pg_1.PrismaPg({ connectionString }, { schema: 'public' }),
+        adapter: new adapter_pg_1.PrismaPg({ connectionString, ...pgOptions }, { schema: 'public' }),
     });
     return _publicClient;
 }

@@ -18,6 +18,7 @@ import {
   X,
   DoorOpen,
   Wrench,
+  Scale,
 } from "lucide-react"
 import { ProtectedLayout } from "./ProtectedLayout"
 import { useState } from "react"
@@ -79,10 +80,21 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
-    label: "Equipment Maintenance",
-    href:  "/maintenance",
+    label: "Equipment",
     icon:  Wrench,
     roles: ["System Administrator", "User Admin", "Warehouse Operator", "Maintenance Technician"],
+    children: [
+      { label: "Maintenance", href: "/maintenance" },
+    ],
+  },
+  {
+    label: "Scale",
+    icon:  Scale,
+    roles: ["System Administrator", "User Admin", "Warehouse Operator", "Maintenance Technician"],
+    children: [
+      { label: "Scale Dashboard", href: "/scale/dashboard" },
+      { label: "Scale Maintenance", href: "/scale/maintenance" },
+    ],
   },
 ]
 
@@ -90,7 +102,7 @@ const NAV_ITEMS: NavItem[] = [
 
 function Sidebar({ userRole, onNavigate }: { userRole?: string; onNavigate?: () => void }) {
   const pathname = usePathname()
-  const [openGroups, setOpenGroups] = useState<string[]>(["Administration", "Room"])
+  const [openGroups, setOpenGroups] = useState<string[]>(["Administration", "Room", "Scale", "Equipment"])
 
   function toggleGroup(label: string) {
     setOpenGroups((prev) =>

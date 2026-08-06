@@ -26,6 +26,7 @@ import {
 
 const schema = z.object({
   scaleNumber:              z.string().min(1, "Scale number is required").max(50),
+  scaleName:                z.string().max(150).optional(),
   scaleType:                z.enum(["analytical", "precision", "industrial", "moisture", "other"]).optional(),
   minRange:                 z.string().max(20).optional(),
   maxRange:                 z.string().max(20).optional(),
@@ -65,7 +66,7 @@ export function AddScaleDialog({ open, onClose, onCreated }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as any,
     defaultValues: {
-      scaleNumber: "", scaleType: undefined,
+      scaleNumber: "", scaleName: "", scaleType: undefined,
       minRange: "", maxRange: "", capacity: "", leastCount: "",
       manufacturer: "", modelNumber: "",
       lastVerifiedOn: "", nextVerificationDue: "",
@@ -81,6 +82,7 @@ export function AddScaleDialog({ open, onClose, onCreated }: Props) {
     try {
       const created = await apiCreateScale(token, {
         scaleNumber:              values.scaleNumber,
+        scaleName:                values.scaleName              || null,
         scaleType:                values.scaleType             || null,
         minRange:                 values.minRange              || null,
         maxRange:                 values.maxRange              || null,
@@ -136,6 +138,16 @@ export function AddScaleDialog({ open, onClose, onCreated }: Props) {
                 </FormItem>
               )} />
 
+              <FormField control={form.control} name="scaleName" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Scale Name</FormLabel>
+                  <FormControl><Input placeholder="e.g. Analytical Balance A" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="scaleType" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Scale Type</FormLabel>
@@ -150,9 +162,6 @@ export function AddScaleDialog({ open, onClose, onCreated }: Props) {
                   <FormMessage />
                 </FormItem>
               )} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="manufacturer" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Manufacturer</FormLabel>
@@ -160,6 +169,9 @@ export function AddScaleDialog({ open, onClose, onCreated }: Props) {
                   <FormMessage />
                 </FormItem>
               )} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="modelNumber" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Model Number</FormLabel>

@@ -147,6 +147,13 @@ model User {
   createdEquipMaintLogs          EquipmentMaintenanceLog[]  @relation("EquipMaintLogCreatedBy")
   updatedEquipMaintLogs          EquipmentMaintenanceLog[]  @relation("EquipMaintLogUpdatedBy")
   performedEquipMaintAudits      EquipmentMaintenanceAudit[] @relation("EquipMaintAuditPerformedBy")
+  createdEquipmentDetails        EquipmentDetail[] @relation("EquipmentDetailCreatedBy")
+  updatedEquipmentDetails        EquipmentDetail[] @relation("EquipmentDetailUpdatedBy")
+  markedScaleMaintLogs           ScaleMaintenanceLog[] @relation("ScaleMaintLogMarkedBy")
+  stoppedScaleMaintLogs          ScaleMaintenanceLog[] @relation("ScaleMaintLogStoppedBy")
+  authorizedScaleMaintLogs       ScaleMaintenanceLog[] @relation("ScaleMaintLogAuthorizedBy")
+  createdScaleMaintLogs          ScaleMaintenanceLog[] @relation("ScaleMaintLogCreatedBy")
+  updatedScaleMaintLogs          ScaleMaintenanceLog[] @relation("ScaleMaintLogUpdatedBy")
 
   @@index([username])
   @@index([isActive])
@@ -297,8 +304,6 @@ model CleaningEquipment {
 
   createdByUser      User?                    @relation("CleaningEquipmentCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   updatedByUser      User?                    @relation("CleaningEquipmentUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
-  maintenanceLogs    EquipmentMaintenanceLog[] @relation("EquipmentMaintenanceLogs")
-  currentMaintenance EquipmentMaintenanceLog?  @relation("CurrentEquipmentMaintenance", fields: [currentMaintenanceLogId], references: [id])
 
   @@index([isActive])
   @@index([cleaningType])
@@ -799,6 +804,7 @@ model Scale {
   slid                    Int       @default(autoincrement()) @map("slid")
   scaleId                 String    @unique @map("scale_id") @db.VarChar(20)
   scaleNumber             String    @unique @map("scale_number") @db.VarChar(50)
+  scaleName               String?   @map("scale_name") @db.VarChar(150)
   minRange                String?   @map("min_range") @db.VarChar(20)
   minRangeGrams           Decimal?  @map("min_range_grams") @db.Decimal(12, 6)
   maxRange                String?   @map("max_range") @db.VarChar(20)
@@ -825,8 +831,13 @@ model Scale {
   createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  createdByUser User? @relation("ScaleCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  updatedByUser User? @relation("ScaleUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  /// FK to the currently active ScaleMaintenanceLog. NULL = no active maintenance.
+  currentMaintenanceLogId String? @unique @map("current_maintenance_log_id") @db.Uuid
+
+  createdByUser       User? @relation("ScaleCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser       User? @relation("ScaleUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  maintenanceLogs     ScaleMaintenanceLog[] @relation("ScaleMaintenanceLogs")
+  currentMaintenance  ScaleMaintenanceLog?  @relation("CurrentScaleMaintenance", fields: [currentMaintenanceLogId], references: [id])
 
   @@index([scaleId])
   @@index([scaleNumber])
@@ -834,6 +845,70 @@ model Scale {
   @@index([nextVerificationDue])
   @@index([nextCalibrationDue])
   @@map("scales")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCALE MAINTENANCE MODULE
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ScaleMaintenanceType {
+  id                     String   @id @default(uuid()) @db.Uuid
+  slid                   Int      @default(autoincrement()) @map("slid")
+  maintenanceTypeCode    String   @unique @map("maintenance_type_code") @db.VarChar(20)
+  maintenanceTypeName    String   @unique @map("maintenance_type_name") @db.VarChar(150)
+  maintenanceTypeDetails String?  @map("maintenance_type_details")
+  displayOrder           Int      @default(0) @map("display_order")
+  isActive               Boolean  @default(true) @map("is_active")
+  createdBy              String?  @map("created_by") @db.Uuid
+  updatedBy              String?  @map("updated_by") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  maintenanceLogs ScaleMaintenanceLog[]
+
+  @@index([isActive])
+  @@index([displayOrder])
+  @@map("scale_maintenance_types")
+}
+
+model ScaleMaintenanceLog {
+  id                       String    @id @default(uuid()) @db.Uuid
+  slid                     Int       @default(autoincrement()) @map("slid")
+  scaleId                  String    @map("scale_id") @db.Uuid
+  maintenanceTypeId        String    @map("maintenance_type_id") @db.Uuid
+  maintenanceStartDatetime DateTime  @map("maintenance_start_datetime") @db.Timestamptz(6)
+  maintenanceEndDatetime   DateTime? @map("maintenance_end_datetime") @db.Timestamptz(6)
+  durationMinutes          Int?      @map("duration_minutes")
+  reasonForMaintenance     String    @map("reason_for_maintenance")
+  /// scheduled | active | stopped | cancelled
+  status                   String    @default("scheduled") @map("status") @db.VarChar(20)
+  markedBy                 String    @map("marked_by") @db.Uuid
+  stoppedBy                String?   @map("stopped_by") @db.Uuid
+  stoppedAt                DateTime? @map("stopped_at") @db.Timestamptz(6)
+  completionRemarks        String?   @map("completion_remarks")
+  authorizedBy             String?   @map("authorized_by") @db.Uuid
+  authorizedAt             DateTime? @map("authorized_at") @db.Timestamptz(6)
+  authorizationRemarks     String?   @map("authorization_remarks")
+  /// pending | approved | rejected
+  authorizationStatus      String    @default("pending") @map("authorization_status") @db.VarChar(20)
+  createdBy                String?   @map("created_by") @db.Uuid
+  updatedBy                String?   @map("updated_by") @db.Uuid
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  scale               Scale                @relation("ScaleMaintenanceLogs", fields: [scaleId], references: [id], onDelete: Restrict)
+  maintenanceType     ScaleMaintenanceType @relation(fields: [maintenanceTypeId], references: [id], onDelete: Restrict)
+  markedByUser        User                 @relation("ScaleMaintLogMarkedBy", fields: [markedBy], references: [id], onDelete: Restrict)
+  stoppedByUser       User?                @relation("ScaleMaintLogStoppedBy", fields: [stoppedBy], references: [id], onDelete: SetNull)
+  authorizedByUser    User?                @relation("ScaleMaintLogAuthorizedBy", fields: [authorizedBy], references: [id], onDelete: SetNull)
+  createdByUser       User?                @relation("ScaleMaintLogCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser       User?                @relation("ScaleMaintLogUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  currentForScale     Scale?               @relation("CurrentScaleMaintenance")
+
+  @@index([scaleId])
+  @@index([status])
+  @@index([authorizationStatus])
+  @@map("scale_maintenance_logs")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1028,14 +1103,14 @@ model EquipmentMaintenanceLog {
   createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  equipment           CleaningEquipment         @relation("EquipmentMaintenanceLogs", fields: [equipmentId], references: [id], onDelete: Restrict)
+  equipment           EquipmentDetail           @relation("EquipmentMaintenanceLogs", fields: [equipmentId], references: [id], onDelete: Restrict)
   maintenanceType     EquipmentMaintenanceType  @relation(fields: [maintenanceTypeId], references: [id], onDelete: Restrict)
   markedByUser        User                      @relation("EquipMaintLogMarkedBy", fields: [markedBy], references: [id], onDelete: Restrict)
   stoppedByUser       User?                     @relation("EquipMaintLogStoppedBy", fields: [stoppedBy], references: [id], onDelete: SetNull)
   authorizedByUser    User?                     @relation("EquipMaintLogAuthorizedBy", fields: [authorizedBy], references: [id], onDelete: SetNull)
   createdByUser       User?                     @relation("EquipMaintLogCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   updatedByUser       User?                     @relation("EquipMaintLogUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
-  currentForEquipment CleaningEquipment?         @relation("CurrentEquipmentMaintenance")
+  currentForEquipment EquipmentDetail?           @relation("CurrentEquipmentMaintenance")
   auditEntries        EquipmentMaintenanceAudit[]
 
   @@index([equipmentId])
@@ -1089,3 +1164,41 @@ model InAppNotification {
   @@map("in_app_notifications")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EQUIPMENT DETAILS — Master equipment registry
+// ─────────────────────────────────────────────────────────────────────────────
+
+model EquipmentDetail {
+  id                  String   @id @default(uuid()) @db.Uuid
+  /// Human-readable code: EQ-001, EQ-002 …
+  equipmentId         String   @unique @map("equipment_id") @db.VarChar(20)
+  equipmentName       String   @unique @map("equipment_name") @db.VarChar(150)
+  serialNo            String?  @unique @map("serial_no") @db.VarChar(100)
+  /// JSON array of ProcessType IDs (UUIDs)
+  supportedProcesses  Json     @default("[]") @map("supported_processes")
+  /// fixed | movable
+  equipmentType       String   @default("fixed") @map("equipment_type") @db.VarChar(20)
+  manufacturer        String?  @map("manufacturer") @db.VarChar(150)
+  purchaseDate        DateTime? @map("purchase_date") @db.Date
+  commissionDate      DateTime? @map("commission_date") @db.Date
+  decommissionDate    DateTime? @map("decommission_date") @db.Date
+  isActive            Boolean  @default(true) @map("is_active")
+  /// active | under_maintenance
+  status              String   @default("active") @map("status") @db.VarChar(20)
+  statusReason        String?  @map("status_reason")
+  /// FK to the currently active EquipmentMaintenanceLog. NULL = no active maintenance.
+  currentMaintenanceLogId String? @unique @map("current_maintenance_log_id") @db.Uuid
+  createdBy           String?  @map("created_by") @db.Uuid
+  updatedBy           String?  @map("updated_by") @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdByUser User? @relation("EquipmentDetailCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser User? @relation("EquipmentDetailUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  maintenanceLogs     EquipmentMaintenanceLog[] @relation("EquipmentMaintenanceLogs")
+  currentMaintenance  EquipmentMaintenanceLog?  @relation("CurrentEquipmentMaintenance", fields: [currentMaintenanceLogId], references: [id])
+
+  @@index([isActive])
+  @@index([equipmentType])
+  @@map("equipment_details")
+}

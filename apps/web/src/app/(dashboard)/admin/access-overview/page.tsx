@@ -120,6 +120,7 @@ export default function AccessOverviewPage() {
   const [users,     setUsers]     = useState<UserListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error,     setError]     = useState<{ code: string; message: string } | null>(null)
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null)
 
   // ── Guard: only System Administrator ───────────────────────────────────────
   useEffect(() => {
@@ -245,6 +246,38 @@ export default function AccessOverviewPage() {
           Each role&apos;s access level per functional area of the system.
         </p>
 
+        {/* ── Role Selector ──────────────────────────────────────────────────── */}
+        <div className="flex flex-wrap items-center gap-2 py-2">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Filter by Role:
+          </span>
+          <button
+            onClick={() => setSelectedRoleId(null)}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+              selectedRoleId === null
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80",
+            )}
+          >
+            All Roles
+          </button>
+          {roles.map((role) => (
+            <button
+              key={role.id}
+              onClick={() => setSelectedRoleId(role.id)}
+              className={cn(
+                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                selectedRoleId === role.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80",
+              )}
+            >
+              {role.roleName}
+            </button>
+          ))}
+        </div>
+
         <div className="rounded-xl border bg-card overflow-x-auto">
           <table className="w-full text-sm min-w-[640px]">
             <thead>
@@ -252,11 +285,17 @@ export default function AccessOverviewPage() {
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground w-56">
                   Functional Area
                 </th>
-                {roles.map((role) => (
-                  <th key={role.id} className="text-center px-3 py-3 font-medium">
-                    <RoleBadge roleName={role.roleName} />
+                {selectedRoleId === null ? (
+                  roles.map((role) => (
+                    <th key={role.id} className="text-center px-3 py-3 font-medium">
+                      <RoleBadge roleName={role.roleName} />
+                    </th>
+                  ))
+                ) : (
+                  <th className="text-center px-3 py-3 font-medium">
+                    <RoleBadge roleName={roles.find((r) => r.id === selectedRoleId)?.roleName || "Role"} />
                   </th>
-                ))}
+                )}
               </tr>
             </thead>
             <tbody>
@@ -276,15 +315,27 @@ export default function AccessOverviewPage() {
                         <p className="text-xs text-muted-foreground mt-0.5">{info.description}</p>
                       )}
                     </td>
-                    {roles.map((role) => {
-                      const perms = getPermissionsForRole(role)
-                      const val   = perms[key] ?? "none"
-                      return (
-                        <td key={role.id} className="text-center px-3 py-3">
-                          <PermBadge value={val} />
-                        </td>
-                      )
-                    })}
+                    {selectedRoleId === null ? (
+                      roles.map((role) => {
+                        const perms = getPermissionsForRole(role)
+                        const val   = perms[key] ?? "none"
+                        return (
+                          <td key={role.id} className="text-center px-3 py-3">
+                            <PermBadge value={val} />
+                          </td>
+                        )
+                      })
+                    ) : (
+                      <td className="text-center px-3 py-3">
+                        {(() => {
+                          const selectedRole = roles.find((r) => r.id === selectedRoleId)
+                          if (!selectedRole) return null
+                          const perms = getPermissionsForRole(selectedRole)
+                          const val   = perms[key] ?? "none"
+                          return <PermBadge value={val} />
+                        })()}
+                      </td>
+                    )}
                   </tr>
                 )
               })}

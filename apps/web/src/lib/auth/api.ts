@@ -626,6 +626,123 @@ export function apiImportCleaningEquipment(
   return apiPost<ImportResult>("/api/cleaning-equipment/import", { rows }, accessToken)
 }
 
+// ── Equipment Details ─────────────────────────────────────────────────────────
+
+export const EQUIPMENT_TYPES = ['fixed', 'movable'] as const
+export type EquipmentType = typeof EQUIPMENT_TYPES[number]
+
+export interface EquipmentDetailItem {
+  id:                 string
+  equipmentId:        string
+  equipmentName:      string
+  serialNo:           string | null
+  supportedProcesses: string[]
+  equipmentType:      EquipmentType
+  manufacturer:       string | null
+  purchaseDate:       string | null
+  commissionDate:     string | null
+  decommissionDate:   string | null
+  isActive:           boolean
+  createdAt:          string
+  updatedAt:          string
+}
+
+export interface CreateEquipmentDetailPayload {
+  equipmentName:       string
+  serialNo?:           string
+  supportedProcesses?: string[]
+  equipmentType?:      EquipmentType
+  manufacturer?:       string
+  purchaseDate?:       string | null
+  commissionDate?:     string | null
+  decommissionDate?:   string | null
+  isActive?:           boolean
+}
+
+export interface UpdateEquipmentDetailPayload {
+  equipmentName?:      string
+  serialNo?:           string | null
+  supportedProcesses?: string[]
+  equipmentType?:      EquipmentType
+  manufacturer?:       string | null
+  purchaseDate?:       string | null
+  commissionDate?:     string | null
+  decommissionDate?:   string | null
+  isActive?:           boolean
+}
+
+export interface EquipmentDetailImportRow {
+  equipmentName:    string
+  serialNo?:        string
+  equipmentType?:   EquipmentType
+  manufacturer?:    string
+  purchaseDate?:    string
+  commissionDate?:  string
+  decommissionDate?: string
+}
+
+export function apiListEquipmentDetails(
+  accessToken: string,
+  search?: string,
+  type?: string,
+): Promise<EquipmentDetailItem[]> {
+  const params = new URLSearchParams()
+  if (search) params.set("search", search)
+  if (type)   params.set("type",   type)
+  const qs = params.toString() ? `?${params.toString()}` : ""
+  return apiGet<EquipmentDetailItem[]>(`/api/equipment-details${qs}`, accessToken)
+}
+
+export function apiCreateEquipmentDetail(
+  accessToken: string,
+  payload:     CreateEquipmentDetailPayload,
+): Promise<EquipmentDetailItem> {
+  return apiPost<EquipmentDetailItem>("/api/equipment-details", payload, accessToken)
+}
+
+export function apiUpdateEquipmentDetail(
+  accessToken: string,
+  id:          string,
+  payload:     UpdateEquipmentDetailPayload,
+): Promise<EquipmentDetailItem> {
+  return apiFetch<EquipmentDetailItem>(`/api/equipment-details/${id}`, {
+    method: "PATCH",
+    body:   JSON.stringify(payload),
+    token:  accessToken,
+  })
+}
+
+export function apiDeleteEquipmentDetail(
+  accessToken: string,
+  id:          string,
+): Promise<null> {
+  return apiFetch<null>(`/api/equipment-details/${id}`, {
+    method: "DELETE",
+    token:  accessToken,
+  })
+}
+
+export async function apiExportEquipmentDetails(accessToken: string): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/api/equipment-details/export`, {
+    method:      "GET",
+    credentials: "include",
+    headers:     { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) {
+    let code = "UNKNOWN", message = "Export failed"
+    try { const b = await res.json(); code = b.error ?? code; message = b.message ?? message } catch { /* */ }
+    throw new ApiError(code, message, res.status)
+  }
+  return res.blob()
+}
+
+export function apiImportEquipmentDetails(
+  accessToken: string,
+  rows:        EquipmentDetailImportRow[],
+): Promise<ImportResult> {
+  return apiPost<ImportResult>("/api/equipment-details/import", { rows }, accessToken)
+}
+
 // ── Packaging Types ───────────────────────────────────────────────────────────
 
 export const PACKAGING_CATEGORIES = [
@@ -861,6 +978,7 @@ export interface ScaleItem {
   slid:                     number
   scaleId:                  string
   scaleNumber:              string
+  scaleName:                string | null
   minRange:                 string | null
   minRangeGrams:            number | null
   maxRange:                 string | null
@@ -888,6 +1006,7 @@ export interface ScaleItem {
 
 export interface CreateScalePayload {
   scaleNumber:              string
+  scaleName?:               string | null
   scaleType?:               string | null
   minRange?:                string | null
   maxRange?:                string | null
@@ -1988,6 +2107,124 @@ export function apiRejectEquipmentMaintenance(
   payload:     { authorizationRemarks: string },
 ): Promise<EquipmentMaintenanceLogItem> {
   return apiPost<EquipmentMaintenanceLogItem>(`/api/equipment-maintenance/${id}/reject`, payload, accessToken)
+}
+
+// ── Scale Maintenance ─────────────────────────────────────────────────────────
+
+export interface ScaleMaintenanceTypeItem {
+  id:                    string
+  maintenanceTypeCode:   string
+  maintenanceTypeName:   string
+  maintenanceTypeDetails: string | null
+  displayOrder:          number
+  isActive:              boolean
+}
+
+export interface ScaleListItem {
+  id:        string
+  scaleCode: string
+  scaleName: string
+  capacity:  string | null
+  isActive:  boolean
+  status:    string
+}
+
+export interface ScaleMaintenanceLogItem {
+  id:                       string
+  slid:                     number
+  scaleId:                  string
+  scaleCode:                string
+  scaleName:                string
+  capacity:                 string | null
+  scaleStatus:              string
+  maintenanceTypeId:        string
+  maintenanceTypeName:      string
+  maintenanceStartDatetime: string
+  maintenanceEndDatetime:   string | null
+  durationMinutes:          number | null
+  reasonForMaintenance:     string
+  status:                   MaintenanceStatus
+  markedBy:                 string
+  markedByName:             string
+  stoppedBy:                string | null
+  stoppedByName:            string | null
+  stoppedAt:                string | null
+  completionRemarks:        string | null
+  authorizedBy:             string | null
+  authorizedByName:         string | null
+  authorizedAt:             string | null
+  authorizationRemarks:     string | null
+  authorizationStatus:      AuthorizationStatus
+  createdAt:                string
+  updatedAt:                string
+}
+
+export interface CreateScaleMaintenancePayload {
+  scaleId:                  string
+  maintenanceTypeId:        string
+  maintenanceStartDatetime: string
+  reasonForMaintenance:     string
+}
+
+export function apiListScaleMaintenanceTypes(
+  accessToken: string,
+): Promise<ScaleMaintenanceTypeItem[]> {
+  return apiGet<ScaleMaintenanceTypeItem[]>("/api/scale-maintenance/types", accessToken)
+}
+
+export function apiListScalesForMaintenance(
+  accessToken: string,
+): Promise<ScaleListItem[]> {
+  return apiGet<ScaleListItem[]>("/api/scale-maintenance/scales", accessToken)
+}
+
+export function apiListScaleMaintenanceLogs(
+  accessToken: string,
+  filters?: { status?: string; scaleId?: string },
+): Promise<ScaleMaintenanceLogItem[]> {
+  const p = new URLSearchParams()
+  if (filters?.status)  p.set("status",  filters.status)
+  if (filters?.scaleId) p.set("scaleId", filters.scaleId)
+  const qs = p.toString()
+  return apiGet<ScaleMaintenanceLogItem[]>(`/api/scale-maintenance${qs ? "?" + qs : ""}`, accessToken)
+}
+
+export function apiCreateScaleMaintenance(
+  accessToken: string,
+  payload:     CreateScaleMaintenancePayload,
+): Promise<ScaleMaintenanceLogItem> {
+  return apiPost<ScaleMaintenanceLogItem>("/api/scale-maintenance", payload, accessToken)
+}
+
+export function apiStartScaleMaintenance(
+  accessToken: string,
+  id:          string,
+): Promise<ScaleMaintenanceLogItem> {
+  return apiPost<ScaleMaintenanceLogItem>(`/api/scale-maintenance/${id}/start`, {}, accessToken)
+}
+
+export function apiStopScaleMaintenance(
+  accessToken: string,
+  id:          string,
+  payload?:    { completionRemarks?: string },
+): Promise<ScaleMaintenanceLogItem> {
+  return apiPost<ScaleMaintenanceLogItem>(`/api/scale-maintenance/${id}/stop`, payload ?? {}, accessToken)
+}
+
+export function apiApproveScaleMaintenance(
+  accessToken: string,
+  id:          string,
+  payload?:    { authorizationRemarks?: string },
+): Promise<ScaleMaintenanceLogItem> {
+  return apiPost<ScaleMaintenanceLogItem>(`/api/scale-maintenance/${id}/approve`, payload ?? {}, accessToken)
+}
+
+export function apiRejectScaleMaintenance(
+  accessToken: string,
+  id:          string,
+  payload:     { authorizationRemarks: string },
+): Promise<ScaleMaintenanceLogItem> {
+  return apiPost<ScaleMaintenanceLogItem>(`/api/scale-maintenance/${id}/reject`, payload, accessToken)
 }
 
 // ── In-App Notifications ──────────────────────────────────────────────────────

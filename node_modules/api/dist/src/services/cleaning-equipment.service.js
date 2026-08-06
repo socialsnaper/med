@@ -44,7 +44,7 @@ const SELECT = {
     id: true, equipmentCode: true, equipmentName: true,
     equipmentDetails: true, cleaningType: true, material: true,
     requiresReplacement: true, replacementIntervalDays: true,
-    displayOrder: true, isActive: true, createdAt: true, updatedAt: true,
+    displayOrder: true, isActive: true, status: true, createdAt: true, updatedAt: true,
 };
 // ── CSV helpers ────────────────────────────────────────────────────────────────
 function csvCell(v) {
